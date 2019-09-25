@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
+"""Given a function f: ℝ^n -> ℝ^m,
+returns a function Iterable[ℝ^n] -> pd.DataFrame,
+where each row of the DataFrame stores the inputs and outputs of one call of f.
+
+Use introspection to read the name of the arguments of f.
+TODO: Support keyword arguments.
+
+If the function returns a tuple, the output is saved in the DataFrame as n columns 'f[0]', ... 'f[n]'.
+Otherwise, a single column named 'f' is used to store the output.
+Alternatively, users can define the output names using function annotations:
+
+    def f(x, y, z) -> ("a", "b", "c"):
+        ...
+"""
+
+# FullArgSpec(args=['a'], varargs='args', varkw='kwargs', defaults=None,
+#             kwonlyargs=['b'], kwonlydefaults={'b': 1}, annotations={})
 
 from inspect import getfullargspec
 from functools import wraps
@@ -11,78 +28,55 @@ import pandas as pd
 from tqdm import tqdm
 
 
-def pandify(f):
-    """Given a function f: ℝ^n -> ℝ^m,
-    returns a function Iterable[ℝ^n] -> pd.DataFrame,
-    where each row of the DataFrame stores the inputs and outputs of one call of f.
-
-    Use introspection to read the name of the arguments of f.
-    TODO: Support keyword arguments.
-
-    If the function returns a tuple, the output is saved in the DataFrame as n columns 'f[0]', ... 'f[n]'.
-    Otherwise, a single column named 'f' is used to store the output.
-    Alternatively, users can define the output names using function annotations:
-    
-        def f(x, y, z) -> ("a", "b", "c"):
-            ...
-    """
-
+def recording_calls(f):
     f_spec = getfullargspec(f)
-    # f_spec is of the form:
-    # FullArgSpec(args=['a'], varargs='args', varkw='kwargs', defaults=None,
-    #             kwonlyargs=['b'], kwonlydefaults={'b': 1}, annotations={})
-
     input_names = f_spec.args
+    # TODO: keyword-only arguments
 
     if 'return' in f_spec.annotations:
-        output_names = list(f_spec.annotations['return'])
-        nb_outputs = len(output_names)
+        if isinstance(f_spec.annotations['return'], tuple) or isinstance(f_spec.annotations['return'], list):
+            output_names = list(f_spec.annotations['return'])
+        else:
+            output_names = [f_spec.annotations['return']]
     else:
         output_names = []
-        nb_outputs = 1
 
     @wraps(f)
-    def pandified_f(list_of_params):
-        nonlocal output_names, nb_outputs
+    def recorded_f(*args, **kwargs):
+        nonlocal input_names, output_names
 
-        data = []
-        for params in list_of_params:
-            result = f(*params)
+        record = {name: value for name, value in zip(input_names, args)}
+        record = {**record, **kwargs}
 
-            if isinstance(result, tuple):
-                nb_outputs = max(nb_outputs, len(result))
-                data.append(tuple(params) + result)
+        result = f(*args, **kwargs)
 
-            else:
-                data.append(params + (result,))
-
-        if len(output_names) == 0:
-            if nb_outputs == 1:
-                output_names = [f.__name__]
-            else:
-                output_names = [f.__name__ + "[{}]".format(i) for i in range(nb_outputs)]
-
-        df = pd.DataFrame(data, columns=input_names + output_names)
-        if len(input_names) > 0:
-            df = df.set_index(input_names)
-
-        return df
-
-    return pandified_f
-
-
-def parametric_study(f, progressbar=True):
-    """
-    """
-    pandified_f = pandify(f)
-
-    @wraps(f)
-    def vectorized_f(*args_range):
-        nonlocal progressbar
-        if not progressbar:
-            return pandified_f(product(*args_range))
+        if (isinstance(result, tuple) or isinstance(result, list)) and len(result) > 1:
+            for i, res in enumerate(result):
+                if len(output_names) <= i:
+                    output_names.append(f.__name__ + "[{}]".format(i))
+                record[output_names[i]] = res
+        # TODO: Support namedtuple and dicts
         else:
-            return pandified_f(tqdm(list(product(*args_range))))
+            if len(output_names) == 0:
+                output_names.append(f.__name__)
+            record[output_names[0]] = result
 
-    return vectorized_f
+        return record
+
+    return recorded_f
+
+
+def recording_map(f, *args):
+    return map(recording_calls(f), *args)
+
+
+def pandas_map(f, *args):
+    input_names = getfullargspec(f).args
+    return pd.DataFrame(list(recording_map(f, *args))).set_index(input_names)
+
+# TODO: PyDOE wrappers
+
+def full_parametric_study(f, *args_range):
+    return pandas_map(f, *zip(*product(*args_range)))
+
 
