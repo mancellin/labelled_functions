@@ -1,22 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-"""Given a function f: ℝ^n -> ℝ^m,
-returns a function Iterable[ℝ^n] -> pd.DataFrame,
-where each row of the DataFrame stores the inputs and outputs of one call of f.
-
-Use introspection to read the name of the arguments of f.
-TODO: Support keyword arguments.
-
-If the function returns a tuple, the output is saved in the DataFrame as n columns 'f[0]', ... 'f[n]'.
-Otherwise, a single column named 'f' is used to store the output.
-Alternatively, users can define the output names using function annotations:
-
-    def f(x, y, z) -> ("a", "b", "c"):
-        ...
-"""
-
-# FullArgSpec(args=['a'], varargs='args', varkw='kwargs', defaults=None,
-#             kwonlyargs=['b'], kwonlydefaults={'b': 1}, annotations={})
 
 from inspect import getfullargspec
 from functools import wraps
@@ -29,9 +12,34 @@ from tqdm import tqdm
 
 
 def recording_calls(f):
+    """Decorate a function to make it return a dict of its inputs and outputs.
+
+    >>> recording_calls(round)(1.6)
+    {'number': 1.6, 'round': 2}
+
+    >>> recording_calls(pow)(2, 3)
+    {'x': 2, 'y': 3, 'pow': 8}
+
+    The keys of the dict are optained by introspection: they are here the name of the input variable in the code and the name of the function itself.
+
+    Positional and keyword arguments are supported, but nor *args, **kwargs, nor keyword-only arguments (TODO).
+
+    If the function return a tuple or a list, it is expanded in the dict:
+
+    >>> def cube(x):
+            return (12*x, 6*x**2, x**3)
+    >>> recording_calls(cube)(5)
+    {'x': 5, 'cube[0]': 60, 'cube[1]': 150, 'cube[2]': 125}
+
+    There are several ways to change the keys of the output, such as annotations:
+
+    >>> def cube(x) -> ('length', 'area', 'volume'):
+            return (12*x, 6*x**2, x**3)
+    >>> recording_calls(cube)(5)
+    {'x': 5, 'length': 60, 'area': 150, 'volume': 125}
+    """
     f_spec = getfullargspec(f)
     input_names = f_spec.args
-    # TODO: keyword-only arguments
 
     if 'return' in f_spec.annotations:
         if isinstance(f_spec.annotations['return'], tuple) or isinstance(f_spec.annotations['return'], list):
@@ -73,8 +81,6 @@ def recording_map(f, *args):
 def pandas_map(f, *args):
     input_names = getfullargspec(f).args
     return pd.DataFrame(list(recording_map(f, *args))).set_index(input_names)
-
-# TODO: PyDOE wrappers
 
 def full_parametric_study(f, *args_range):
     return pandas_map(f, *zip(*product(*args_range)))

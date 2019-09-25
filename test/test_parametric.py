@@ -24,7 +24,7 @@ def optional_double(x=0):
 def sum(x, y):
     return x+y
 
-def optional_sum(x, y=0):
+def optional_sum(x=0, y=0):
     return x+y
 
 def cube(x):
@@ -48,6 +48,10 @@ def test_recorder():
 
     assert recording_calls(optional_sum)(4, 5) == {'x': 4, 'y': 5, 'optional_sum': 9}
     assert recording_calls(optional_sum)(4) == {'x': 4, 'optional_sum': 4}
+    assert recording_calls(optional_sum)() == {'optional_sum': 0}
+    assert recording_calls(optional_sum)(x=4, y=5) == {'x': 4, 'y': 5, 'optional_sum': 9}
+    assert recording_calls(optional_sum)(y=4, x=5) == {'y': 4, 'x': 5, 'optional_sum': 9}
+    assert recording_calls(optional_sum)(y=4) == {'y': 4, 'optional_sum': 4}
 
     assert recording_calls(cube)(4) == {'x': 4, 'cube[0]': 4, 'cube[1]': 4, 'cube[2]': 4}
 
