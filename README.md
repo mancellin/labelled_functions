@@ -1,8 +1,8 @@
 # Labelled functions
 
 Labelled functions are Python functions with some metadata on its inputs and
-outputs. They are meant to be used with Pandas and Xarray for scientific
-modelling, but the concept is quite general and could find other uses.
+outputs. They are meant to be used with `pandas` and `xarray` in order to avoid
+boilerplate code when labelling the data.
 
 ```python
 In [1]: def double(x):

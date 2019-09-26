@@ -7,7 +7,7 @@ from hypothesis.strategies import floats
 import numpy as np
 import pandas as pd
 
-from labelled_functions.parametric import *
+from labelled_functions.maps import *
 
 from example_functions import *
 
@@ -34,26 +34,10 @@ def test_pandas_map(a, b, c, d):
     assert np.all(
         pandas_map(annotated_cube, [a, b])
         == pd.DataFrame(data={'x': [a, b],
-                              'width': [a, b],
-                              'height': [a, b],
-                              'depth': [a, b],
+                              'length': [12*a, 12*b],
+                              'area': [6*a**2, 6*b**2],
+                              'volume': [a**3, b**3],
                               }
                         ).set_index('x')
-    )
-
-@given(number, number, number, number)
-@settings(max_examples=10)
-def test_full_parametric_study(a, b, c, d):
-    assert np.all(
-        full_parametric_study(double, [a, b])
-        == pandas_map(double, [a, b])
-    )
-    assert np.all(
-        full_parametric_study(sum, [a, b], [c, d])
-        == pd.DataFrame(data={'x': [a, a, b, b],
-                              'y': [c, d, c, d],
-                              'sum': [a+c, a+d, b+c, b+d],
-                              }
-                        ).set_index(['x', 'y'])
     )
 
