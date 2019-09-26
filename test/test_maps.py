@@ -11,7 +11,7 @@ from labelled_functions.maps import *
 
 from example_functions import *
 
-number = floats(allow_nan=False, allow_infinity=False)
+number = floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False)
 
 def test_recorded_map():
     assert list(recorded_map(double, [1])) == [{'x': 1, 'double': 2}]
@@ -41,3 +41,11 @@ def test_pandas_map(a, b, c, d):
                         ).set_index('x')
     )
 
+
+def test_pandas_map_on_df():
+    x, y = np.random.rand(10), np.random.rand(10)
+    df = pd.DataFrame(data={'x': x, 'y': y})
+    assert np.all(
+        pandas_map(sum, df).reset_index()
+        == pd.DataFrame(data={'x': x, 'y': y, 'sum': x+y})
+    )

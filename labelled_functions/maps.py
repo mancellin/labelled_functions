@@ -11,5 +11,8 @@ def recorded_map(f, *args):
 
 def pandas_map(f, *args):
     f = LabelledFunction(f)
-    return pd.DataFrame(list(recorded_map(f, *args))).set_index(f.input_names)
+    if len(args) == 1 and isinstance(args[0], pd.DataFrame):
+        return pandas_map(f, *[args[0][name] for name in f.input_names])
+    else:
+        return pd.DataFrame(list(recorded_map(f, *args))).set_index(f.input_names)
 
