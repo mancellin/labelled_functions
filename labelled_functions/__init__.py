@@ -8,8 +8,6 @@ from itertools import product
 import numpy as np
 import pandas as pd
 
-from tqdm import tqdm
-
 
 def recording_calls(f):
     """Decorate a function to make it return a dict of its inputs and outputs.
