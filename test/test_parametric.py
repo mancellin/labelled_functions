@@ -7,37 +7,14 @@ from hypothesis.strategies import floats
 import numpy as np
 import pandas as pd
 
-from labelled_functions.labels import recording_calls
-from labelled_functions.parametric import pandas_map, full_parametric_study
+from labelled_functions.parametric import *
 
 from example_functions import *
 
 number = floats(allow_nan=False, allow_infinity=False)
 
-@given(number, number)
-@settings(max_examples=10)
-def test_recorder(a, b):
-    assert recording_calls(pi)() == {'pi': 3.14159}
-    assert recording_calls(deep_thought)() == {'The Answer': 42}
-
-    assert recording_calls(double)(a) == {'x': a, 'double': 2*a}
-
-    assert recording_calls(optional_double)(a) == {'x': a, 'optional_double': 2*a}
-    assert recording_calls(optional_double)(x=a) == {'x': a, 'optional_double': 2*a}
-    assert recording_calls(optional_double)() == {'optional_double': 0}
-
-    assert recording_calls(sum)(a, b) == {'x': a, 'y': b, 'sum': a+b}
-
-    assert recording_calls(optional_sum)(a, b) == {'x': a, 'y': b, 'optional_sum': a+b}
-    assert recording_calls(optional_sum)(a) == {'x': a, 'optional_sum': a}
-    assert recording_calls(optional_sum)() == {'optional_sum': 0}
-    assert recording_calls(optional_sum)(x=a, y=b) == {'x': a, 'y': b, 'optional_sum': a+b}
-    assert recording_calls(optional_sum)(y=a, x=b) == {'y': a, 'x': b, 'optional_sum': a+b}
-    assert recording_calls(optional_sum)(y=a) == {'y': a, 'optional_sum': a}
-
-    assert recording_calls(cube)(a) == {'x': a, 'cube[0]': a, 'cube[1]': a, 'cube[2]': a}
-
-    assert recording_calls(annotated_cube)(a) == {'x': a, 'width': a, 'height': a, 'depth': a}
+def test_recorded_map():
+    assert list(recorded_map(double, [1])) == [{'x': 1, 'double': 2}]
 
 @given(number, number, number, number)
 @settings(max_examples=10)
