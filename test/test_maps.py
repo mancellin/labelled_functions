@@ -49,3 +49,10 @@ def test_pandas_map_on_df():
         pandas_map(sum, df).reset_index()
         == pd.DataFrame(data={'x': x, 'y': y, 'sum': x+y})
     )
+
+def test_mapkw():
+    assert (
+        list(mapkw(cylinder_volume, radius=[4, 5, 6], length=[1, 2, 3]))
+        == list(mapkw(cylinder_volume, length=[1, 2, 3], radius=[4, 5, 6]))
+    )
+

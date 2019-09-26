@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import numpy as np
 
 def pi():
     return 3.14159
@@ -16,6 +20,9 @@ def sum(x, y):
 
 def optional_sum(x=0, y=0):
     return x+y
+
+def cylinder_volume(radius, length):
+    return np.pi * radius**2 * length
 
 def cube(x):
     return (12*x, 6*x**2, x**3)

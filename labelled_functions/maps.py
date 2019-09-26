@@ -16,3 +16,7 @@ def pandas_map(f, *args):
     else:
         return pd.DataFrame(list(recorded_map(f, *args))).set_index(f.input_names)
 
+def mapkw(f, *_, **kwargs):
+    f = LabelledFunction(f)
+    return map(f, *[kwargs[name] for name in f.input_names])
+
