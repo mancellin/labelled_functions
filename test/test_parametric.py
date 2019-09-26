@@ -1,78 +1,81 @@
+#!/usr/bin/env python
+# coding: utf-8
 
-from collections import namedtuple
+from hypothesis import given, settings
+from hypothesis.strategies import floats
 
-import pytest
-# TODO: use Hypothesis
 import numpy as np
 import pandas as pd
 
-from labelled_functions import *
+from labelled_functions.labels import recording_calls
+from labelled_functions.parametric import pandas_map, full_parametric_study
 
 from example_functions import *
 
-def cube(x):
-    return (x, x, x)
+number = floats(allow_nan=False, allow_infinity=False)
 
-def annotated_cube(x) -> ('width', 'height', 'depth'):
-    return (x, x, x)
-
-def test_recorder():
+@given(number, number)
+@settings(max_examples=10)
+def test_recorder(a, b):
     assert recording_calls(pi)() == {'pi': 3.14159}
-
     assert recording_calls(deep_thought)() == {'The Answer': 42}
 
-    assert recording_calls(double)(4) == {'x': 4, 'double': 8}
+    assert recording_calls(double)(a) == {'x': a, 'double': 2*a}
 
-    assert recording_calls(optional_double)(4) == {'x': 4, 'optional_double': 8}
-    assert recording_calls(optional_double)(x=6) == {'x': 6, 'optional_double': 12}
+    assert recording_calls(optional_double)(a) == {'x': a, 'optional_double': 2*a}
+    assert recording_calls(optional_double)(x=a) == {'x': a, 'optional_double': 2*a}
     assert recording_calls(optional_double)() == {'optional_double': 0}
 
-    assert recording_calls(sum)(4, 5) == {'x': 4, 'y': 5, 'sum': 9}
+    assert recording_calls(sum)(a, b) == {'x': a, 'y': b, 'sum': a+b}
 
-    assert recording_calls(optional_sum)(4, 5) == {'x': 4, 'y': 5, 'optional_sum': 9}
-    assert recording_calls(optional_sum)(4) == {'x': 4, 'optional_sum': 4}
+    assert recording_calls(optional_sum)(a, b) == {'x': a, 'y': b, 'optional_sum': a+b}
+    assert recording_calls(optional_sum)(a) == {'x': a, 'optional_sum': a}
     assert recording_calls(optional_sum)() == {'optional_sum': 0}
-    assert recording_calls(optional_sum)(x=4, y=5) == {'x': 4, 'y': 5, 'optional_sum': 9}
-    assert recording_calls(optional_sum)(y=4, x=5) == {'y': 4, 'x': 5, 'optional_sum': 9}
-    assert recording_calls(optional_sum)(y=4) == {'y': 4, 'optional_sum': 4}
+    assert recording_calls(optional_sum)(x=a, y=b) == {'x': a, 'y': b, 'optional_sum': a+b}
+    assert recording_calls(optional_sum)(y=a, x=b) == {'y': a, 'x': b, 'optional_sum': a+b}
+    assert recording_calls(optional_sum)(y=a) == {'y': a, 'optional_sum': a}
 
-    assert recording_calls(cube)(4) == {'x': 4, 'cube[0]': 4, 'cube[1]': 4, 'cube[2]': 4}
+    assert recording_calls(cube)(a) == {'x': a, 'cube[0]': a, 'cube[1]': a, 'cube[2]': a}
 
-    assert recording_calls(annotated_cube)(8) == {'x': 8, 'width': 8, 'height': 8, 'depth': 8}
+    assert recording_calls(annotated_cube)(a) == {'x': a, 'width': a, 'height': a, 'depth': a}
 
-def test_pandas_map():
+@given(number, number, number, number)
+@settings(max_examples=10)
+def test_pandas_map(a, b, c, d):
     assert np.all(
-        pandas_map(double, [3, 5])
-        == pd.DataFrame(data={'x': [3, 5], 'double': [6, 10]}).set_index('x')
+        pandas_map(double, [a, b])
+        == pd.DataFrame(data={'x': [a, b], 'double': [2*a, 2*b]}).set_index('x')
     )
     assert np.all(
-        pandas_map(sum, [3, 5], [1, 0])
-        == pd.DataFrame(data={'x': [3, 5],
-                              'y': [1, 0],
-                              'sum': [4, 5],
+        pandas_map(sum, [a, b], [c, d])
+        == pd.DataFrame(data={'x': [a, b],
+                              'y': [c, d],
+                              'sum': [a+c, b+d],
                               }
                         ).set_index(['x', 'y'])
     )
     assert np.all(
-        pandas_map(annotated_cube, [3, 5])
-        == pd.DataFrame(data={'x': [3, 5],
-                              'width': [3, 5],
-                              'height': [3, 5],
-                              'depth': [3, 5],
+        pandas_map(annotated_cube, [a, b])
+        == pd.DataFrame(data={'x': [a, b],
+                              'width': [a, b],
+                              'height': [a, b],
+                              'depth': [a, b],
                               }
                         ).set_index('x')
     )
 
-def test_full_parametric_study():
+@given(number, number, number, number)
+@settings(max_examples=10)
+def test_full_parametric_study(a, b, c, d):
     assert np.all(
-        full_parametric_study(double, [3, 5])
-        == pandas_map(double, [3, 5])
+        full_parametric_study(double, [a, b])
+        == pandas_map(double, [a, b])
     )
     assert np.all(
-        full_parametric_study(sum, [3, 5], [1, 0])
-        == pd.DataFrame(data={'x': [3, 3, 5, 5],
-                              'y': [1, 0, 1, 0],
-                              'sum': [4, 3, 6, 5],
+        full_parametric_study(sum, [a, b], [c, d])
+        == pd.DataFrame(data={'x': [a, a, b, b],
+                              'y': [c, d, c, d],
+                              'sum': [a+c, a+d, b+c, b+d],
                               }
                         ).set_index(['x', 'y'])
     )

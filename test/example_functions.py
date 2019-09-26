@@ -18,7 +18,7 @@ def optional_sum(x=0, y=0):
     return x+y
 
 def cube(x):
-    return (x, x, x)
+    return (12*x, 6*x**2, x**3)
 
-def annotated_cube(x) -> ('width', 'height', 'depth'):
-    return (x, x, x)
+def annotated_cube(x) -> ('length', 'area', 'volume'):
+    return (12*x, 6*x**2, x**3)
