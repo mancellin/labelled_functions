@@ -18,25 +18,36 @@ def extend_dict(d, keys, values):
 
 class LabelledFunction:
     """Function are assumed to return always the same type of output...
+
+    TODO: Support keyword-only arguments.
     
-    TODO: Support keyword-only arguments."""
+    LabelledFunction is idempotent:
+
+    >>> lf = LabelledFunction(f)
+    >>> llf = LabelledFunction(lf)
+    >>> lf is llf
+    True
+
+    """
 
     def __new__(cls, f):
         if isinstance(f, LabelledFunction):
-            return f  # No need to label it more...
+            return f  # No need to create a new object, the function has already been labelled.
         else:
             return super().__new__(cls)
 
     def __init__(self, f):
-        self.function = f
+        if isinstance(f, LabelledFunction):
+            pass  # Do not rerun __init__ when idempotent call.
+        else:
+            self.function = f
+            self._spec = getfullargspec(f)
 
-        self._spec = getfullargspec(f)
+            self.name = f.__name__
+            self.input_names = self._spec.args
+            self.output_names = Unknown  # For now...
 
-        self.name = f.__name__
-        self.input_names = self._spec.args
-        self.output_names = Unknown  # For now...
-
-        self._parse_annotations()
+            self._parse_annotations()
 
     def _parse_annotations(self):
         if 'return' in self._spec.annotations:
@@ -95,6 +106,7 @@ class LabelledFunction:
             extend_dict(record, self.output_names, result)
 
         return record
+
 
 def recorded_call(f, *args, **kwargs):
     return LabelledFunction(f).recorded_call(*args, **kwargs)

@@ -8,6 +8,7 @@ from example_functions import *
 
 number = floats(allow_nan=False, allow_infinity=False)
 
+
 def test_labelled_class():
     ldt = LabelledFunction(deep_thought)
     assert ldt() == deep_thought(), "The LabelledFunction is not callable"
@@ -18,6 +19,9 @@ def test_labelled_class():
     assert lc(0) == cube(0)
     assert lc.input_names == ['x']
     assert lc.output_names == ['cube[0]', 'cube[1]', 'cube[2]']
+
+    llc = LabelledFunction(lc)
+    assert llc is lc
 
 
 @given(number, number)
