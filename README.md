@@ -4,7 +4,7 @@ Labelled functions are Python functions with some metadata on its inputs and
 outputs. They are meant to be used with `pandas` and `xarray` in order to avoid
 boilerplate code when labelling the data.
 
-# Example: benchmark
+## Example: benchmark
 
 ```python
 import numpy as np
@@ -22,7 +22,7 @@ def benchmark(n):
     )
     return {'min': min(results), 'mean': np.mean(results), 'max': max(results)}
 
-# Apply the function to a range of inputs to get a fully labelled dataframe.
+# Apply the function to a range of inputs to get a fully indexed dataframe.
 df = pandas_map(benchmark, n=range(1, 500, 50))
 
 # Plot this dataframe
