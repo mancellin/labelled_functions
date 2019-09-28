@@ -40,10 +40,10 @@ def test_pandas_map(a, b):
         == pd.DataFrame(data={'x': a, 'double': 2*a}).set_index('x')
     )
     assert np.all(
-        pandas_map(sum, a, b)
+        pandas_map(add, a, b)
         == pd.DataFrame(data={'x': a,
                               'y': b,
-                              'sum': a+b,
+                              'add': a+b,
                               }
                         ).set_index(['x', 'y'])
     )
@@ -63,7 +63,7 @@ def test_pandas_map(a, b):
 def test_pandas_map_on_df(x, y):
     df = pd.DataFrame(data={'x': x, 'y': y})
     assert np.all(
-        pandas_map(sum, df).reset_index()
-        == pd.DataFrame(data={'x': x, 'y': y, 'sum': x+y})
+        pandas_map(add, df).reset_index()
+        == pd.DataFrame(data={'x': x, 'y': y, 'add': x+y})
     )
 

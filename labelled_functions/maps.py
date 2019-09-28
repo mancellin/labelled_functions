@@ -11,7 +11,7 @@ def parse_input(input_names, *args, **kwargs):
     if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pd.DataFrame):
         return [args[0][name] for name in input_names]
     elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], xr.Dataset):
-        return [args[0][name] for name in input_names]
+        return [args[0][name].data for name in input_names]
     else:
         return args + tuple(kwargs[name] for name in input_names[len(args):])
 

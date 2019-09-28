@@ -23,9 +23,11 @@ def test_full_parametric_study():
         == pandas_map(double, a)
     )
 
-    assert full_parametric_study(sum, a, b).to_xarray() == xr.Dataset(
-        {'sum': (('x', 'y'), a[:, None] + b)},
+    A = full_parametric_study(add, a, b).to_xarray()
+    assert A == xr.Dataset(
+        {'add': (('x', 'y'), a[:, None] + b)},
         coords={'x': a,
                 'y': b}
     )
+    assert A == full_parametric_study(add, A).to_xarray()
 

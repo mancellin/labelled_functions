@@ -36,14 +36,14 @@ def test_recorder(a, b):
     assert recorded_call(optional_double, x=a) == {'x': a, 'optional_double': 2*a}
     assert recorded_call(optional_double, ) == {'optional_double': 0}
 
-    assert recorded_call(sum, a, b) == {'x': a, 'y': b, 'sum': a+b}
+    assert recorded_call(add, a, b) == {'x': a, 'y': b, 'add': a+b}
 
-    assert recorded_call(optional_sum, a, b) == {'x': a, 'y': b, 'optional_sum': a+b}
-    assert recorded_call(optional_sum, a) == {'x': a, 'optional_sum': a}
-    assert recorded_call(optional_sum, ) == {'optional_sum': 0}
-    assert recorded_call(optional_sum, x=a, y=b) == {'x': a, 'y': b, 'optional_sum': a+b}
-    assert recorded_call(optional_sum, y=a, x=b) == {'y': a, 'x': b, 'optional_sum': a+b}
-    assert recorded_call(optional_sum, y=a) == {'y': a, 'optional_sum': a}
+    assert recorded_call(optional_add, a, b) == {'x': a, 'y': b, 'optional_add': a+b}
+    assert recorded_call(optional_add, a) == {'x': a, 'optional_add': a}
+    assert recorded_call(optional_add, ) == {'optional_add': 0}
+    assert recorded_call(optional_add, x=a, y=b) == {'x': a, 'y': b, 'optional_add': a+b}
+    assert recorded_call(optional_add, y=a, x=b) == {'y': a, 'x': b, 'optional_add': a+b}
+    assert recorded_call(optional_add, y=a) == {'y': a, 'optional_add': a}
 
     assert recorded_call(cube, a) == {'x': a, 'cube[0]': 12*a, 'cube[1]': 6*a**2, 'cube[2]': a**3}
     assert recorded_call(annotated_cube, a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}

@@ -15,10 +15,10 @@ def double(x):
 def optional_double(x=0):
     return 2*x
 
-def sum(x, y):
+def add(x, y):
     return x+y
 
-def optional_sum(x=0, y=0):
+def optional_add(x=0, y=0):
     return x+y
 
 def cylinder_volume(radius, length):
