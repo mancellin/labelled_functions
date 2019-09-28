@@ -68,7 +68,9 @@ class LabelledFunction:
         if self.output_names is Unknown:
             if is_tuple_or_list(result) and len(result) > 1:
                 self.output_names = [f"{self.name}[{i}]" for i in range(len(result))]
-            # TODO: Handle dictionnaries and named tuples
+            elif isinstance(result, dict):
+                self.output_names = list(result.keys())
+            # TODO: Handle named tuples
             else:
                 self.output_names = [self.name]
         return result
@@ -100,7 +102,9 @@ class LabelledFunction:
 
         result = self.__call__(*args, **kwargs)
 
-        if len(self.output_names) == 1:
+        if isinstance(result, dict):
+            extend_dict(record, result.keys(), result.values())
+        elif len(self.output_names) == 1:
             extend_dict(record, self.output_names, [result])
         else:
             extend_dict(record, self.output_names, result)
