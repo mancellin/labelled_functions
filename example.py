@@ -1,12 +1,6 @@
-# Labelled functions
+#!/usr/bin/env python
+# coding: utf-8
 
-Labelled functions are Python functions with some metadata on its inputs and
-outputs. They are meant to be used with `pandas` and `xarray` in order to avoid
-boilerplate code when labelling the data.
-
-# Example: benchmark
-
-```python
 import numpy as np
 import matplotlib.pyplot as plt
 from timeit import repeat
@@ -28,5 +22,3 @@ df = pandas_map(benchmark, n=range(1, 500, 50))
 # Plot this dataframe
 df.plot(y=['min', 'mean', 'max'])
 plt.show()
-```
-
