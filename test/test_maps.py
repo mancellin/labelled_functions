@@ -7,6 +7,7 @@ from hypothesis.extra.numpy import arrays
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from labelled_functions.maps import *
 
@@ -19,11 +20,13 @@ array = arrays(dtype=np.float64, shape=(10,), elements=number)
 @settings(max_examples=5)
 def test_map_with_several_kind_of_inputs(length, radius):
     df = pd.DataFrame(data={'radius': radius, 'length': length})
+    ds = xr.Dataset(coords={'radius': radius, 'length': length})
     assert (
         list(map(cylinder_volume, radius, length))
         == list(lmap(cylinder_volume, radius, length))
         == list(lmap(cylinder_volume, length=length, radius=radius))
         == list(lmap(cylinder_volume, df))
+        == list(lmap(cylinder_volume, ds))
     )
 
 def test_recorded_map():

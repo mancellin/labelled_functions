@@ -3,29 +3,29 @@
 
 from hypothesis import given, settings
 from hypothesis.strategies import floats
+from hypothesis.extra.numpy import arrays
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from labelled_functions.cartesian_products import *
 
 from example_functions import *
 
-number = floats(allow_nan=False, allow_infinity=False)
 
-@given(number, number, number, number)
-@settings(max_examples=10)
-def test_full_parametric_study(a, b, c, d):
+def test_full_parametric_study():
+    a = np.linspace(1, 10, 10)
+    b = np.linspace(1, 10, 5)
+
     assert np.all(
-        full_parametric_study(double, [a, b])
-        == pandas_map(double, [a, b])
+        full_parametric_study(double, a)
+        == pandas_map(double, a)
     )
-    assert np.all(
-        full_parametric_study(sum, [a, b], [c, d])
-        == pd.DataFrame(data={'x': [a, a, b, b],
-                              'y': [c, d, c, d],
-                              'sum': [a+c, a+d, b+c, b+d],
-                              }
-                        ).set_index(['x', 'y'])
+
+    assert full_parametric_study(sum, a, b).to_xarray() == xr.Dataset(
+        {'sum': (('x', 'y'), a[:, None] + b)},
+        coords={'x': a,
+                'y': b}
     )
 

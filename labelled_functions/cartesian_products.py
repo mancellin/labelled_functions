@@ -3,8 +3,10 @@
 
 from itertools import product
 
-from .maps import pandas_map
+from .labels import LabelledFunction
+from .maps import parse_input, pandas_map
 
-def full_parametric_study(f, *args_range):
-    return pandas_map(f, *zip(*product(*args_range)))
+def full_parametric_study(f, *args, **kwargs):
+    f = LabelledFunction(f)
+    return pandas_map(f, *zip(*product(*parse_input(f.input_names, *args, **kwargs))))
 
