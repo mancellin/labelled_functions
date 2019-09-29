@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from inspect import getfullargspec
+from inspect import signature, Signature
 from functools import wraps
 
 Unknown = None
@@ -41,21 +41,21 @@ class LabelledFunction:
             pass  # Do not rerun __init__ when idempotent call.
         else:
             self.function = f
-            self._spec = getfullargspec(f)
-
             self.name = f.__name__
-            self.input_names = self._spec.args
+            self.signature = signature(f)
+
+            # INPUT
+            self.input_names = []
+            for parameter_name in self.signature.parameters:
+                self.input_names.append(parameter_name)
+
+            # OUTPUT
             self.output_names = Unknown  # For now...
-
-            self._parse_annotations()
-
-    def _parse_annotations(self):
-        if 'return' in self._spec.annotations:
-            if is_tuple_or_list(self._spec.annotations['return']):
-                self.output_names = list(self._spec.annotations['return'])
-            else:
-                self.output_names = [self._spec.annotations['return']]
-        # TODO: Read input annotations?
+            if self.signature.return_annotation is not Signature.empty:
+                if is_tuple_or_list(self.signature.return_annotation):
+                    self.output_names = list(self.signature.return_annotation)
+                else:
+                    self.output_names = [self.signature.return_annotation]
 
     def __getattr__(self, name):
         try:
