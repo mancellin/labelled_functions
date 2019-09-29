@@ -29,8 +29,11 @@ def test_map_with_several_kind_of_inputs(length, radius):
         == list(lmap(cylinder_volume, ds))
     )
 
+
 def test_recorded_map():
     assert list(recorded_map(double, [1])) == [{'x': 1, 'double': 2}]
+    assert list(recorded_map(optional_add, y=[1])) == [{'x': 0, 'y': 1, 'optional_add': 1}]
+
 
 @given(array, array)
 @settings(max_examples=5)

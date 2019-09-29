@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from labelled_functions.maps import *
 from labelled_functions.cartesian_products import *
 
 from example_functions import *

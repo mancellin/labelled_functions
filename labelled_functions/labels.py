@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from inspect import signature, Signature
+from inspect import Parameter, Signature
 from functools import wraps
 
 Unknown = None
@@ -19,7 +19,7 @@ def extend_dict(d, keys, values):
 class LabelledFunction:
     """Function are assumed to return always the same type of output...
 
-    TODO: Support keyword-only arguments.
+    Positional-only arguments are not supported (since their name is irrelevant, they are not suited for labelled functions).
     
     LabelledFunction is idempotent:
 
@@ -42,12 +42,11 @@ class LabelledFunction:
         else:
             self.function = f
             self.name = f.__name__
-            self.signature = signature(f)
+            self.signature = Signature.from_callable(f)
 
             # INPUT
-            self.input_names = []
-            for parameter_name in self.signature.parameters:
-                self.input_names.append(parameter_name)
+            self.input_names = [name for name in self.signature.parameters]
+            self.default_values = {name: self.signature.parameters[name].default for name in self.signature.parameters if self.signature.parameters[name].default is not Parameter.empty}
 
             # OUTPUT
             self.output_names = Unknown  # For now...
@@ -65,6 +64,7 @@ class LabelledFunction:
 
     def __call__(self, *args, **kwargs):
         result = self.function(*args, **kwargs)
+
         if self.output_names is Unknown:
             if is_tuple_or_list(result) and len(result) > 1:
                 self.output_names = [f"{self.name}[{i}]" for i in range(len(result))]
