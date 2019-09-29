@@ -29,3 +29,6 @@ def cube(x):
 
 def annotated_cube(x) -> ('length', 'area', 'volume'):
     return (12*x, 6*x**2, x**3)
+
+def all_kinds_of_args(x, y=1, *, z, t=3):
+    pass

@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import pytest
 
 from hypothesis import given, settings
 from hypothesis.strategies import floats
@@ -32,19 +36,26 @@ def test_recorder(a, b):
 
     assert recorded_call(double, a) == {'x': a, 'double': 2*a}
 
-    assert recorded_call(optional_double, a) == {'x': a, 'optional_double': 2*a}
+    assert recorded_call(optional_double, a)   == {'x': a, 'optional_double': 2*a}
     assert recorded_call(optional_double, x=a) == {'x': a, 'optional_double': 2*a}
-    assert recorded_call(optional_double, ) == {'optional_double': 0}
+    assert recorded_call(optional_double, )    == {'x': 0, 'optional_double': 0}
 
     assert recorded_call(add, a, b) == {'x': a, 'y': b, 'add': a+b}
 
-    assert recorded_call(optional_add, a, b) == {'x': a, 'y': b, 'optional_add': a+b}
-    assert recorded_call(optional_add, a) == {'x': a, 'optional_add': a}
-    assert recorded_call(optional_add, ) == {'optional_add': 0}
+    assert recorded_call(optional_add, a, b)     == {'x': a, 'y': b, 'optional_add': a+b}
+    assert recorded_call(optional_add, a)        == {'x': a, 'y': 0, 'optional_add': a}
+    assert recorded_call(optional_add, )         == {'x': 0, 'y': 0, 'optional_add': 0}
     assert recorded_call(optional_add, x=a, y=b) == {'x': a, 'y': b, 'optional_add': a+b}
-    assert recorded_call(optional_add, y=a, x=b) == {'y': a, 'x': b, 'optional_add': a+b}
-    assert recorded_call(optional_add, y=a) == {'y': a, 'optional_add': a}
+    assert recorded_call(optional_add, y=a, x=b) == {'x': b, 'y': a, 'optional_add': a+b}
+    assert recorded_call(optional_add, y=a)      == {'x': 0, 'y': a, 'optional_add': a}
 
     assert recorded_call(cube, a) == {'x': a, 'cube[0]': 12*a, 'cube[1]': 6*a**2, 'cube[2]': a**3}
     assert recorded_call(annotated_cube, a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
 
+    with pytest.raises(TypeError):
+        recorded_call(all_kinds_of_args, 0, 1, 2, 3)
+    assert recorded_call(all_kinds_of_args, 0, 1, z=2, t=3)         == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
+    assert recorded_call(all_kinds_of_args, x=0, y=1, z=2, t=3) == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
+    assert recorded_call(all_kinds_of_args, x=0, z=2, t=3)      == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
+    assert recorded_call(all_kinds_of_args, x=0, z=2)           == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
+    assert recorded_call(all_kinds_of_args, z=2, t=3, x=0)      == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}

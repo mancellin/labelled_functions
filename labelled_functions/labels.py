@@ -6,16 +6,6 @@ from functools import wraps
 
 Unknown = None
 
-def is_tuple_or_list(a):
-    return isinstance(a, tuple) or isinstance(a, list)
-
-
-def extend_dict(d, keys, values):
-    for key, value in zip(keys, values):
-        d[key] = value
-    return d
-
-
 class LabelledFunction:
     """Function are assumed to return always the same type of output...
 
@@ -96,21 +86,23 @@ class LabelledFunction:
         >>> LabelledFunction(cube).recorded_call(5)
         {'x': 5, 'length': 60, 'area': 150, 'volume': 125}
         """
-        record = {}
-        extend_dict(record, self.input_names, args)
-        extend_dict(record, kwargs.keys(), kwargs.values())
+        record = {**self.default_values, **{name: val for name, val in zip(self.input_names, args)}, **kwargs}
 
         result = self.__call__(*args, **kwargs)
 
         if isinstance(result, dict):
-            extend_dict(record, result.keys(), result.values())
+            record = {**record, **result}
         elif len(self.output_names) == 1:
-            extend_dict(record, self.output_names, [result])
+            record = {**record, self.output_names[0]: result}
         else:
-            extend_dict(record, self.output_names, result)
-
+            record = {**record, **{name: val for name, val in zip(self.output_names, result)}}
         return record
 
 
 def recorded_call(f, *args, **kwargs):
     return LabelledFunction(f).recorded_call(*args, **kwargs)
+
+
+def is_tuple_or_list(a):
+    return isinstance(a, tuple) or isinstance(a, list)
+

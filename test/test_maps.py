@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import pytest
+
 from hypothesis import given, settings
 from hypothesis.strategies import floats
 from hypothesis.extra.numpy import arrays
@@ -33,6 +35,16 @@ def test_map_with_several_kind_of_inputs(length, radius):
 def test_recorded_map():
     assert list(recorded_map(double, [1])) == [{'x': 1, 'double': 2}]
     assert list(recorded_map(optional_add, y=[1])) == [{'x': 0, 'y': 1, 'optional_add': 1}]
+
+    # TODO?
+    # with pytest.raises(TypeError):
+    #     recorded_map(all_kinds_of_args, [0], [1], [2], [3])
+
+    assert list(recorded_map(all_kinds_of_args, [0], [1], z=[2], t=[3]))     == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
+    assert list(recorded_map(all_kinds_of_args, x=[0], y=[1], z=[2], t=[3])) == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
+    assert list(recorded_map(all_kinds_of_args, x=[0], z=[2], t=[3]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
+    assert list(recorded_map(all_kinds_of_args, x=[0], z=[2]))               == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
+    assert list(recorded_map(all_kinds_of_args, z=[2], t=[3], x=[0]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
 
 
 @given(array, array)
