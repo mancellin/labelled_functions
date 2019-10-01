@@ -13,7 +13,7 @@ from timeit import repeat
 from labelled_functions.maps import pandas_map
 
 def benchmark(n):
-    """A very normal Python function that make some numerical experiment."""
+    """A very normal Python function that makes some numerical experiment."""
     results = repeat(
         setup=f"""import numpy as np; A = np.random.rand({n}, {n}); b = np.random.rand({n})""",
         stmt="np.linalg.solve(A, b)",
