@@ -65,6 +65,14 @@ class LabelledFunction:
                 self.output_names = [self.name]
         return result
 
+    def _output_as_dict(self, result):
+        if isinstance(result, dict):
+            return result
+        elif len(self.output_names) == 1:
+            return {self.output_names[0]: result}
+        else:
+            return {name: val for name, val in zip(self.output_names, result)}
+
     def recorded_call(self, *args, **kwargs):
         """Call the function and return a dict with its inputs and outputs.
 
@@ -86,17 +94,14 @@ class LabelledFunction:
         >>> LabelledFunction(cube).recorded_call(5)
         {'x': 5, 'length': 60, 'area': 150, 'volume': 125}
         """
-        record = {**self.default_values, **{name: val for name, val in zip(self.input_names, args)}, **kwargs}
+        inputs = {**self.default_values, **{name: val for name, val in zip(self.input_names, args)}, **kwargs}
+        outputs = self._output_as_dict(self.__call__(*args, **kwargs))
+        return {**inputs, **outputs}
 
-        result = self.__call__(*args, **kwargs)
-
-        if isinstance(result, dict):
-            record = {**record, **result}
-        elif len(self.output_names) == 1:
-            record = {**record, self.output_names[0]: result}
-        else:
-            record = {**record, **{name: val for name, val in zip(self.output_names, result)}}
-        return record
+    def apply_in_namespace(self, namespace):
+        inputs = {name: val for name, val in namespace.items() if name in self.input_names}
+        outputs = self._output_as_dict(self.__call__(**inputs))
+        return {**outputs, **{name: val for name, val in namespace.items() if name not in self.input_names}}
 
 
 def recorded_call(f, *args, **kwargs):
