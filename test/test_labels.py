@@ -59,3 +59,9 @@ def test_recorder(a, b):
     assert recorded_call(all_kinds_of_args, x=0, z=2, t=3)      == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
     assert recorded_call(all_kinds_of_args, x=0, z=2)           == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
     assert recorded_call(all_kinds_of_args, z=2, t=3, x=0)      == {'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}
+
+
+def test_namespace():
+    namespace = {'x': 0, 'y': 3, 'z': 2}
+    new_namespace = LabelledFunction(add).apply_in_namespace(namespace)
+    assert new_namespace == {'add': 3, 'z': 2}
