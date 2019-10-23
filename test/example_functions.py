@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import numpy as np
+from random import random
 
 def pi():
     return 3.14159
@@ -20,6 +21,9 @@ def add(x, y):
 
 def optional_add(x=0, y=0):
     return x+y
+
+def random_radius() -> 'radius':
+    return random()
 
 def cylinder_volume(radius, length):
     return np.pi * radius**2 * length
