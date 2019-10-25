@@ -106,7 +106,8 @@ class LabelledFunction:
     def apply_in_namespace(self, namespace):
         inputs = {name: val for name, val in namespace.items() if name in self.input_names}
         outputs = self._output_as_dict(self.__call__(**inputs))
-        return {**outputs, **{name: val for name, val in namespace.items() if name not in self.input_names}}
+        namespace.update(outputs)
+        return namespace
 
 
 def recorded_call(f, *args, **kwargs):

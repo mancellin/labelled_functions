@@ -66,4 +66,4 @@ def test_recorder(a, b):
 def test_namespace():
     namespace = {'x': 0, 'y': 3, 'z': 2}
     new_namespace = LabelledFunction(add).apply_in_namespace(namespace)
-    assert new_namespace == {'add': 3, 'z': 2}
+    assert new_namespace == {'add': 3, 'x': 0, 'y': 3, 'z': 2}
