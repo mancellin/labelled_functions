@@ -46,6 +46,11 @@ class LabelledFunction:
                 else:
                     self.output_names = [self.signature.return_annotation]
 
+    def __str__(self):
+        input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
+        output_str = ", ".join(self.output_names) if len(self.output_names) > 0 else ""
+        return f"{self.name}({input_str}) -> ({output_str})"
+
     def __getattr__(self, name):
         try:
             return getattr(self.function, name)

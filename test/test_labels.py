@@ -18,11 +18,13 @@ def test_labelled_class():
     assert ldt() == deep_thought(), "The LabelledFunction is not callable"
     assert ldt.__code__ == deep_thought.__code__, "Attributes are not passed to encapsulated function"
     assert ldt.name == deep_thought.__name__, "Name is wrong"
+    assert str(ldt) == "deep_thought() -> (The Answer)"
 
     lc = LabelledFunction(cube)
     assert lc(0) == cube(0)
     assert lc.input_names == ['x']
     assert lc.output_names == ['cube[0]', 'cube[1]', 'cube[2]']
+    assert str(lc) == "cube(x) -> (cube[0], cube[1], cube[2])"
 
     llc = LabelledFunction(lc)
     assert llc is lc
