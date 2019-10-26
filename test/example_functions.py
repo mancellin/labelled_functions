@@ -4,8 +4,9 @@
 import numpy as np
 from random import random
 
-def pi():
-    return 3.14159
+def compute_pi():
+    pi = 3.14159
+    return pi
 
 def deep_thought() -> "The Answer":
     return 42
@@ -22,14 +23,19 @@ def add(x, y):
 def optional_add(x=0, y=0):
     return x+y
 
-def random_radius() -> 'radius':
-    return random()
+def random_radius():
+    radius = random()
+    return radius
 
 def cylinder_volume(radius, length):
-    return np.pi * radius**2 * length
+    volume = np.pi * radius**2 * length
+    return volume
 
 def cube(x):
-    return (12*x, 6*x**2, x**3)
+    length = 12*x
+    area = 6*x**2
+    volume = x**3
+    return length, area, volume
 
 def annotated_cube(x) -> ('length', 'area', 'volume'):
     return (12*x, 6*x**2, x**3)

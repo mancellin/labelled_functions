@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from typing import Dict
-from inspect import Parameter, Signature
+from typing import Dict, List
+from inspect import Parameter, Signature, getsource
 from functools import wraps
+
+import parso
 
 Unknown = None
 
@@ -60,11 +62,20 @@ class LabelledFunction:
 
             # OUTPUT
             self.output_names = Unknown  # For now...
+
             if self.signature.return_annotation is not Signature.empty:
                 if _is_tuple_or_list(self.signature.return_annotation):
                     self.output_names = list(self.signature.return_annotation)
                 else:
                     self.output_names = [self.signature.return_annotation]
+
+            else:
+                try:
+                    source = getsource(self.function)
+                    self.output_names = _get_output_names_from_source(source)
+                except ValueError:
+                    pass
+
 
     def __str__(self):
         input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
@@ -91,7 +102,9 @@ class LabelledFunction:
         return result
 
     def _output_as_dict(self, result):
-        if isinstance(result, dict):
+        if result is None:
+            return {}
+        elif isinstance(result, dict):
             return result
         elif len(self.output_names) == 1:
             return {self.output_names[0]: result}
@@ -142,6 +155,42 @@ def recorded_call(f, *args, **kwargs):
     return LabelledFunction(f).recorded_call(*args, **kwargs)
 
 
+# HELPER FUNCTIONS
+
 def _is_tuple_or_list(a):
     return isinstance(a, tuple) or isinstance(a, list)
+
+def _get_output_names_from_source(source: str) -> List[str]:
+    content = parso.parse(source)
+    return_stmt = _find_return_in_tree(content)
+    if return_stmt is None:
+        return []  # The function has no return statement.
+    names = _parse_returned_expression(return_stmt.children[-1])
+    if names is not None:
+        # Strip space and newlines (when using \ at the end of the line)
+        return [n.strip(' \\\n') for n in names]
+    else:
+        raise ValueError("A return statement has been found, "
+                         "but it is not a simple expression or a typle")
+
+def _find_return_in_tree(tree):
+    # Recursively go through the syntax tree to find a return statement.
+    if tree.type == "return_stmt":
+        # Found!
+        return tree
+    elif hasattr(tree, 'children'):
+        # Go through the children, starting with the end.
+        for s in reversed(tree.children):
+            found = _find_return_in_tree(s)
+            if found is not None:
+                return found
+
+def _parse_returned_expression(tree):
+    # Look for a single expression, or a tuple of expressions.
+    if tree.type in {"name", "term", "arith_expr", "atom_expr"}:
+        return [tree.get_code()]
+    elif tree.type == "testlist":
+        return [o.get_code() for o in tree.children if not o.type == "operator"]
+    elif tree.type == "atom" and "(" in tree.children[0].get_code():
+        return _parse_returned_expression(tree.children[1])
 

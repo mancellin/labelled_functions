@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from hypothesis import given, settings
-from hypothesis.strategies import floats
-from hypothesis.extra.numpy import arrays
-
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -26,7 +22,7 @@ def test_full_parametric_study():
 
     A = full_parametric_study(add, a, b).to_xarray()
     assert A == xr.Dataset(
-        {'add': (('x', 'y'), a[:, None] + b)},
+        {'x+y': (('x', 'y'), a[:, None] + b)},
         coords={'x': a,
                 'y': b}
     )

@@ -33,18 +33,18 @@ def test_map_with_several_kind_of_inputs(length, radius):
 
 
 def test_recorded_map():
-    assert list(recorded_map(double, [1])) == [{'x': 1, 'double': 2}]
-    assert list(recorded_map(optional_add, y=[1])) == [{'x': 0, 'y': 1, 'optional_add': 1}]
+    assert list(recorded_map(double, [1])) == [{'x': 1, '2*x': 2}]
+    assert list(recorded_map(optional_add, y=[1])) == [{'x': 0, 'y': 1, 'x+y': 1}]
 
     # TODO?
     # with pytest.raises(TypeError):
     #     recorded_map(all_kinds_of_args, [0], [1], [2], [3])
 
-    assert list(recorded_map(all_kinds_of_args, [0], [1], z=[2], t=[3]))     == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
-    assert list(recorded_map(all_kinds_of_args, x=[0], y=[1], z=[2], t=[3])) == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
-    assert list(recorded_map(all_kinds_of_args, x=[0], z=[2], t=[3]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
-    assert list(recorded_map(all_kinds_of_args, x=[0], z=[2]))               == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
-    assert list(recorded_map(all_kinds_of_args, z=[2], t=[3], x=[0]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3, 'all_kinds_of_args': None}]
+    assert list(recorded_map(all_kinds_of_args, [0], [1], z=[2], t=[3]))     == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(recorded_map(all_kinds_of_args, x=[0], y=[1], z=[2], t=[3])) == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(recorded_map(all_kinds_of_args, x=[0], z=[2], t=[3]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(recorded_map(all_kinds_of_args, x=[0], z=[2]))               == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(recorded_map(all_kinds_of_args, z=[2], t=[3], x=[0]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
 
 
 @given(array, array)
@@ -52,13 +52,13 @@ def test_recorded_map():
 def test_pandas_map(a, b):
     assert np.all(
         pandas_map(double, a)
-        == pd.DataFrame(data={'x': a, 'double': 2*a}).set_index('x')
+        == pd.DataFrame(data={'x': a, '2*x': 2*a}).set_index('x')
     )
     assert np.all(
         pandas_map(add, a, b)
         == pd.DataFrame(data={'x': a,
                               'y': b,
-                              'add': a+b,
+                              'x+y': a+b,
                               }
                         ).set_index(['x', 'y'])
     )
@@ -79,6 +79,6 @@ def test_pandas_map_on_df(x, y):
     df = pd.DataFrame(data={'x': x, 'y': y})
     assert np.all(
         pandas_map(add, df).reset_index()
-        == pd.DataFrame(data={'x': x, 'y': y, 'add': x+y})
+        == pd.DataFrame(data={'x': x, 'y': y, 'x+y': x+y})
     )
 
