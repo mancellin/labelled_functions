@@ -4,7 +4,7 @@ from .labels import Unknown, LabelledFunction
 def compose(funcs):
     return pipeline(reversed(funcs))
 
-def pipeline(funcs, keep_all_internals=False):
+def pipeline(funcs, keep_all_internals=False, debug=False):
     funcs = [LabelledFunction(f) for f in funcs]
 
     for f in funcs:
@@ -27,6 +27,8 @@ def pipeline(funcs, keep_all_internals=False):
     @LabelledFunction
     def pipe(**namespace):
         for f in funcs:
+            if debug:
+                print(namespace.keys())
             namespace = f.apply_in_namespace(namespace)
         return {name: val for name, val in namespace.items() if name in pipe_outputs}
 

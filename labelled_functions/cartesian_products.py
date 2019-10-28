@@ -16,7 +16,11 @@ def recorded_cartesian_product(f, *args, **kwargs):
 
 def pandas_cartesian_product(f, *args, **kwargs):
     f = LabelledFunction(f)
-    return pd.DataFrame(list(recorded_cartesian_product(f, *args, **kwargs))).set_index(f.input_names)
+    df = pd.DataFrame(list(recorded_cartesian_product(f, *args, **kwargs)))
+    try:
+        return df.set_index(f.input_names)
+    except KeyError:  # TODO: fix missing optional arguments in pipelines
+        return df
 
 full_parametric_study = pandas_cartesian_product
 
