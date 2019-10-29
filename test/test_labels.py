@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import pytest
+import xarray as xr
 
 from hypothesis import given, settings
 from hypothesis.strategies import floats
@@ -71,4 +72,9 @@ def test_namespace():
     namespace = {'x': 0, 'y': 3, 'z': 2}
     new_namespace = LabelledFunction(add).apply_in_namespace(namespace)
     assert new_namespace == {'x+y': 3, 'x': 0, 'y': 3, 'z': 2}
+
+    in_ds = xr.Dataset(coords={'radius': np.linspace(0, 1, 10),
+                               'length': np.linspace(0, 1, 10)})
+    out_ds = LabelledFunction(cylinder_volume).apply_in_namespace(in_ds)
+    assert 'volume' in out_ds.data_vars
 

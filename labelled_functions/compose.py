@@ -38,6 +38,7 @@ def pipeline(funcs, *, keep_intermediate_outputs=False, debug=False, default_val
         for f in funcs:
             if debug:
                 print(namespace.keys())
+                print(str(f))
             namespace = f.apply_in_namespace(namespace)
 
         return {name: val for name, val in namespace.items() if name in pipe_outputs}

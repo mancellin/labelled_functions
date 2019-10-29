@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from typing import Dict, List
+from typing import Dict, List, Union
 from inspect import Parameter, Signature, getsource
 from functools import wraps
 
+import xarray as xr
 import parso
 
 Unknown = None
@@ -136,7 +137,7 @@ class LabelledFunction:
         outputs = self._output_as_dict(self.__call__(*args, **kwargs))
         return {**inputs, **outputs}
 
-    def apply_in_namespace(self, namespace: Dict) -> Dict:
+    def apply_in_namespace(self, namespace: Union[Dict, xr.Dataset]) -> Union[Dict, xr.Dataset]:
         """Call the functions using the relevant variables in the namespace as
         inputs and adding the outputs to the namespace (in-place).
 
@@ -145,7 +146,11 @@ class LabelledFunction:
         >>> LabelledFunction(round).apply_in_namespace({'number': 4.2, 'other': 'a'})
         {'number': 4.2, 'other': 'a', 'round': 4}
         """
-        inputs = {name: val for name, val in namespace.items() if name in self.input_names}
+        if isinstance(namespace, xr.Dataset):
+            keys = set(namespace.coords) | set(namespace.data_vars)
+        else:
+            keys = namespace.keys()
+        inputs = {name: namespace[name] for name in keys if name in self.input_names}
         outputs = self._output_as_dict(self.__call__(**inputs))
         namespace.update(outputs)
         return namespace
