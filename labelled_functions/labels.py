@@ -155,6 +155,18 @@ class LabelledFunction:
         namespace.update(outputs)
         return namespace
 
+    def view_graph(self):
+        import pygraphviz as pgv
+        graph = pgv.AGraph(directed=True, strict=False)
+        graph.add_node('Inputs', style='filled', shape='box')
+        graph.add_node(self.name, style='filled', shape='oval')
+        graph.add_node('Outputs', style='filled', shape='box')
+        for input_name in self.input_names:
+            graph.add_edge('Inputs', self.name, label=input_name)
+        for input_name in self.output_names:
+            graph.add_edge(self.name, 'Outputs', label=input_name)
+        # graph.draw('/home/ancellin/test.png', prog='dot')
+
 
 def recorded_call(f, *args, **kwargs):
     return LabelledFunction(f).recorded_call(*args, **kwargs)
