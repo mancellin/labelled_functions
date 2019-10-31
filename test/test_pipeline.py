@@ -3,7 +3,7 @@
 
 import pytest
 
-from labelled_functions.compose import compose, pipeline
+from labelled_functions.pipeline import compose, pipeline
 
 from example_functions import *
 
