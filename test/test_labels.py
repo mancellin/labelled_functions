@@ -34,6 +34,15 @@ def test_idempotence():
     assert llc is lc
 
 
+def test_output_checking():
+    la = LabelledFunction(add)
+    assert la._has_never_been_run
+
+    la.output_names = ['moose', 'llama']
+    with pytest.raises(AssertionError):
+        la(1, 2)
+
+
 def test_recorder():
     a, b = 1, 2
 

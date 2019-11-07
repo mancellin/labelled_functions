@@ -43,11 +43,11 @@ class LabelledFunction:
 
     """
 
-    def __new__(cls, f):
+    def __new__(cls, f, **kwargs):
         if isinstance(f, LabelledFunction):
             return f  # No need to create a new object, the function has already been labelled.
         else:
-            return super().__new__(cls)
+            return super().__new__(cls, **kwargs)
 
     def __init__(self, f):
         if isinstance(f, LabelledFunction):
@@ -55,20 +55,22 @@ class LabelledFunction:
         else:
             self.function = f
             self.name = f.__name__
-            self.signature = Signature.from_callable(f)
+            self._signature = Signature.from_callable(f)
 
             # INPUT
-            self.input_names = [name for name in self.signature.parameters]
-            self.default_values = {name: self.signature.parameters[name].default for name in self.signature.parameters if self.signature.parameters[name].default is not Parameter.empty}
+            self.input_names = [name for name in self._signature.parameters]
+            self.default_values = {name: self._signature.parameters[name].default for name in self._signature.parameters if self._signature.parameters[name].default is not Parameter.empty}
 
             # OUTPUT
+            self._has_never_been_run = True
+
             self.output_names = Unknown  # For now...
 
-            if self.signature.return_annotation is not Signature.empty:
-                if _is_tuple_or_list(self.signature.return_annotation):
-                    self.output_names = list(self.signature.return_annotation)
+            if self._signature.return_annotation is not Signature.empty:
+                if _is_tuple_or_list(self._signature.return_annotation):
+                    self.output_names = list(self._signature.return_annotation)
                 else:
-                    self.output_names = [self.signature.return_annotation]
+                    self.output_names = [self._signature.return_annotation]
 
             else:
                 try:
@@ -92,15 +94,36 @@ class LabelledFunction:
     def __call__(self, *args, **kwargs):
         result = self.function(*args, **kwargs)
 
-        if self.output_names is Unknown:
-            if _is_tuple_or_list(result) and len(result) > 1:
-                self.output_names = [f"{self.name}[{i}]" for i in range(len(result))]
-            elif isinstance(result, dict):
-                self.output_names = list(result.keys())
-            # TODO: Handle named tuples
+        if self._has_never_been_run:
+            self._has_never_been_run = False
+            if self.output_names is Unknown:
+                self.output_names = self._guess_output_names_from(result)
             else:
-                self.output_names = [self.name]
+                self._check_output_consistency(result)
         return result
+
+    def _guess_output_names_from(self, result):
+        if result is None:
+            return []
+        elif _is_tuple_or_list(result) and len(result) > 1:
+            return [f"{self.name}[{i}]" for i in range(len(result))]
+        elif isinstance(result, dict):
+            return list(result.keys())
+        # TODO: Handle named tuples
+        else:
+            return [self.name]
+
+    def _check_output_consistency(self, result):
+        if result is None:
+            assert len(self.output_names) == 0
+        elif _is_tuple_or_list(result) and len(result) > 1:
+            assert len(result) == len(self.output_names)
+        elif isinstance(result, dict):
+            assert set(result.keys()) == set(self.output_names)
+        # TODO: Handle named tuples
+        else:
+            assert len(self.output_names) == 1
+
 
     def _output_as_dict(self, result):
         if result is None:
