@@ -18,27 +18,27 @@ def test_pipeline():
         pipe(length=1.0, potato=1.0)
 
 
-def test_keep_intermediate_outputs():
+def test_return_intermediate_outputs():
     # Only outputs
-    pipe = pipeline([random_radius, cylinder_volume], keep_intermediate_outputs=False)
+    pipe = pipeline([random_radius, cylinder_volume], return_intermediate_outputs=False)
     result = pipe(length=1.0)
     assert 'length' not in result.keys()
     assert 'radius' not in result.keys()
 
     # Outputs and intermediate variable
-    pipe = pipeline([random_radius, cylinder_volume], keep_intermediate_outputs=True)
+    pipe = pipeline([random_radius, cylinder_volume], return_intermediate_outputs=True)
     result = pipe(length=1.0)
     assert 'length' not in result.keys()
     assert 'radius' in result.keys()
 
     # Inputs and outputs but no intermediate variable
-    pipe = pipeline([random_radius, cylinder_volume], keep_intermediate_outputs=False)
+    pipe = pipeline([random_radius, cylinder_volume], return_intermediate_outputs=False)
     result = pipe.recorded_call(length=1.0)
     assert 'length' in result.keys()
     assert 'radius' not in result.keys()
 
     # Inputs and outputs and intermediate variable
-    pipe = pipeline([random_radius, cylinder_volume], keep_intermediate_outputs=True)
+    pipe = pipeline([random_radius, cylinder_volume], return_intermediate_outputs=True)
     result = pipe.recorded_call(length=1.0)
     assert 'length' in result.keys()
     assert 'radius' in result.keys()

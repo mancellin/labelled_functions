@@ -47,7 +47,7 @@ class LabelledFunction:
         if isinstance(f, LabelledFunction):
             return f  # No need to create a new object, the function has already been labelled.
         else:
-            return super().__new__(cls, **kwargs)
+            return super().__new__(cls)
 
     def __init__(self, f):
         if isinstance(f, LabelledFunction):
