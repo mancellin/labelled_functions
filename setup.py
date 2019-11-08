@@ -10,6 +10,7 @@ setup(
     install_requires=[
         'pandas',
         'xarray',
+        'toolz',
         'parso',
     ],
     packages=['labelled_functions'],
