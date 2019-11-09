@@ -1,8 +1,23 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+from labelled_functions.abstract import AbstractLabelledCallable
 from labelled_functions.labels import Unknown, LabelledFunction
 from toolz.itertoolz import groupby
 from toolz.dicttoolz import merge
 
-class Pipeline(LabelledFunction):
+# API
+
+def compose(funcs, **kwargs):
+    return LabelledPipeline(list(reversed(funcs)), **kwargs)
+
+def pipeline(funcs, **kwargs):
+    return LabelledPipeline(funcs, **kwargs)
+
+
+# Internals
+
+class LabelledPipeline(AbstractLabelledCallable):
     def __init__(self, funcs,
                  *, name=None, return_intermediate_outputs=False, default_values=None
                  ):
@@ -53,20 +68,14 @@ class Pipeline(LabelledFunction):
 
         return {name: val for name, val in namespace.items() if name in self.output_names}
 
-    graph_function_style = {'style': 'filled', 'shape': 'oval'}
-    graph_input_style = {'shape': 'box'}
-    graph_output_style = {'shape': 'box'}
-
-    def plot(funcs):
-        funcs = [LabelledFunction(f) for f in funcs]
-
+    def graph(self):
         from pygraphviz import AGraph
         G = AGraph(rankdir='LR', directed=True, strict=False)
 
         pipe_inputs = set()
         last_modified = {}  # variable name => function that returned it last
         pipe_outputs = set()
-        for f in funcs:
+        for f in self.funcs:
             G.add_node(f.name, **graph_function_style)
             for var_name in f.input_names:
                 pipe_outputs -= {var_name}
@@ -101,8 +110,3 @@ class Pipeline(LabelledFunction):
         G.draw('/home/ancellin/test.png', prog='dot')
         return G
 
-def compose(funcs, **kwargs):
-    return Pipeline(list(reversed(funcs)), **kwargs)
-
-def pipeline(funcs, **kwargs):
-    return Pipeline(funcs, **kwargs)

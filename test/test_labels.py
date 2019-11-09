@@ -17,7 +17,7 @@ number = floats(allow_nan=False, allow_infinity=False)
 def test_labelled_class():
     ldt = LabelledFunction(deep_thought)
     assert ldt() == deep_thought(), "The LabelledFunction is not callable"
-    assert ldt.__code__ == deep_thought.__code__, "Attributes are not passed to encapsulated function"
+    assert ldt.__wrapped__.__code__ == deep_thought.__code__, "Attributes are not passed to encapsulated function"
     assert ldt.name == deep_thought.__name__, "Name is wrong"
     assert str(ldt) == "deep_thought() -> (The Answer)", "String representation is wrong"
 
@@ -46,35 +46,35 @@ def test_output_checking():
 def test_recorder():
     a, b = 1, 2
 
-    assert recorded_call(compute_pi) == {'pi': 3.14159}
-    assert recorded_call(deep_thought) == {'The Answer': 42}
+    assert label(compute_pi).recorded_call() == {'pi': 3.14159}
+    assert label(deep_thought).recorded_call() == {'The Answer': 42}
 
-    assert recorded_call(double, a) == {'x': a, '2*x': 2*a}
+    assert label(double).recorded_call(a) == {'x': a, '2*x': 2*a}
 
-    assert recorded_call(optional_double, a)   == {'x': a, '2*x': 2*a}
-    assert recorded_call(optional_double, x=a) == {'x': a, '2*x': 2*a}
-    assert recorded_call(optional_double, )    == {'x': 0, '2*x': 0}
+    assert label(optional_double).recorded_call(a)   == {'x': a, '2*x': 2*a}
+    assert label(optional_double).recorded_call(x=a) == {'x': a, '2*x': 2*a}
+    assert label(optional_double).recorded_call()    == {'x': 0, '2*x': 0}
 
-    assert recorded_call(add, a, b) == {'x': a, 'y': b, 'x+y': a+b}
+    assert label(add).recorded_call(a, b) == {'x': a, 'y': b, 'x+y': a+b}
 
-    assert recorded_call(optional_add, a, b)     == {'x': a, 'y': b, 'x+y': a+b}
-    assert recorded_call(optional_add, a)        == {'x': a, 'y': 0, 'x+y': a}
-    assert recorded_call(optional_add, )         == {'x': 0, 'y': 0, 'x+y': 0}
-    assert recorded_call(optional_add, x=a, y=b) == {'x': a, 'y': b, 'x+y': a+b}
-    assert recorded_call(optional_add, y=a, x=b) == {'x': b, 'y': a, 'x+y': a+b}
-    assert recorded_call(optional_add, y=a)      == {'x': 0, 'y': a, 'x+y': a}
+    assert label(optional_add).recorded_call(a, b)     == {'x': a, 'y': b, 'x+y': a+b}
+    assert label(optional_add).recorded_call(a)        == {'x': a, 'y': 0, 'x+y': a}
+    assert label(optional_add).recorded_call()         == {'x': 0, 'y': 0, 'x+y': 0}
+    assert label(optional_add).recorded_call(x=a, y=b) == {'x': a, 'y': b, 'x+y': a+b}
+    assert label(optional_add).recorded_call(y=a, x=b) == {'x': b, 'y': a, 'x+y': a+b}
+    assert label(optional_add).recorded_call(y=a)      == {'x': 0, 'y': a, 'x+y': a}
 
-    assert recorded_call(cube, a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
-    assert recorded_call(annotated_cube, a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
+    assert label(cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
+    assert label(annotated_cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
 
     with pytest.raises(TypeError):
-        recorded_call(all_kinds_of_args, 0, 1, 2, 3)
+        label(all_kinds_of_args).recorded_call(0, 1, 2, 3)
 
-    assert recorded_call(all_kinds_of_args, 0, 1, z=2, t=3)     == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert recorded_call(all_kinds_of_args, x=0, y=1, z=2, t=3) == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert recorded_call(all_kinds_of_args, x=0, z=2, t=3)      == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert recorded_call(all_kinds_of_args, x=0, z=2)           == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert recorded_call(all_kinds_of_args, z=2, t=3, x=0)      == {'x': 0, 'y': 1, 'z': 2, 't': 3}
+    assert label(all_kinds_of_args).recorded_call(0, 1, z=2, t=3)     == {'x': 0, 'y': 1, 'z': 2, 't': 3}
+    assert label(all_kinds_of_args).recorded_call(x=0, y=1, z=2, t=3) == {'x': 0, 'y': 1, 'z': 2, 't': 3}
+    assert label(all_kinds_of_args).recorded_call(x=0, z=2, t=3)      == {'x': 0, 'y': 1, 'z': 2, 't': 3}
+    assert label(all_kinds_of_args).recorded_call(x=0, z=2)           == {'x': 0, 'y': 1, 'z': 2, 't': 3}
+    assert label(all_kinds_of_args).recorded_call(z=2, t=3, x=0)      == {'x': 0, 'y': 1, 'z': 2, 't': 3}
 
 
 def test_namespace():
