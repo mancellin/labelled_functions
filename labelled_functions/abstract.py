@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import List, Dict, Union, Any
 from copy import copy
 from abc import ABC, abstractmethod
 
@@ -6,6 +6,11 @@ import xarray as xr
 
 class AbstractLabelledCallable:
     """Common code between all labelled function classes."""
+
+    # The attributes below should be defined in each instances of inheriting classes.
+    input_names: List[str]
+    output_names: List[str]
+    default_values: Dict[str, Any]  # with keys in input_names
 
     @abstractmethod
     def __call__(self, *args, **kwargs):
@@ -22,7 +27,7 @@ class AbstractLabelledCallable:
         else:
             assert len(self.output_names) == 1
 
-    def _output_as_dict(self, result):
+    def _output_as_dict(self, result) -> Dict[str, Any]:
         if result is None:
             return {}
         elif isinstance(result, dict):
@@ -40,7 +45,7 @@ class AbstractLabelledCallable:
         f.default_values = {**self.default_values, **kwargs}
         return f
 
-    def recorded_call(self, *args, **kwargs):
+    def recorded_call(self, *args, **kwargs) -> Dict[str, Any]:
         """Call the function and return a dict with its inputs and outputs.
 
         Examples
@@ -65,7 +70,7 @@ class AbstractLabelledCallable:
         outputs = self._output_as_dict(self.__call__(*args, **kwargs))
         return {**inputs, **outputs}
 
-    def apply_in_namespace(self, namespace: Union[Dict, xr.Dataset]) -> Union[Dict, xr.Dataset]:
+    def apply_in_namespace(self, namespace: Union[Dict[str, Any], xr.Dataset]) -> Union[Dict[str, Any], xr.Dataset]:
         """Call the functions using the relevant variables in the namespace as
         inputs and adding the outputs to the namespace (in-place).
 
