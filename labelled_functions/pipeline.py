@@ -17,6 +17,15 @@ def pipeline(funcs, **kwargs):
 def let(**kwargs):
     return LabelledFunction(lambda: tuple(kwargs.values()), name="setter", output_names=list(kwargs.keys()))
 
+def relabel(old, new):
+    # FIXME: Overly complicated implementation?
+    def identity(**kwargs):
+        return {new: kwargs[old]}
+    lf = LabelledFunction(identity, name=f"relabel {old} as {new}")
+    lf.input_names = [old]
+    lf.output_names = [new]
+    return lf
+
 # Internals
 
 class LabelledPipeline(AbstractLabelledCallable):
