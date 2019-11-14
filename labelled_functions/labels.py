@@ -65,7 +65,7 @@ class LabelledFunction(AbstractLabelledCallable):
         else:
             return super().__new__(cls)
 
-    def __init__(self, f, *, name=None, input_names=Unknown, output_names=Unknown):
+    def __init__(self, f, *, name=None, output_names=Unknown):
         if isinstance(f, AbstractLabelledCallable):
             pass  # Do not rerun __init__ when idempotent call.
         else:
@@ -73,15 +73,16 @@ class LabelledFunction(AbstractLabelledCallable):
             update_wrapper(self, f)
 
             if name is None:
-                name = f.__name__
+                try:
+                    name = f.__name__
+                except AttributeError:
+                    pass
             self.name = name
 
             self._signature = Signature.from_callable(f)
 
             # INPUT
-            if input_names is None:
-                input_names = [name for name in self._signature.parameters]
-            self.input_names = input_names
+            self.input_names = [name for name in self._signature.parameters]
 
             self.default_values = {name: self._signature.parameters[name].default for name in self._signature.parameters if self._signature.parameters[name].default is not Parameter.empty}
 
@@ -99,7 +100,7 @@ class LabelledFunction(AbstractLabelledCallable):
                     try:
                         source = getsource(self.function)
                         output_names = _get_output_names_from_source(source)
-                    except ValueError:
+                    except (ValueError, TypeError):
                         pass
             self.output_names = output_names
 
