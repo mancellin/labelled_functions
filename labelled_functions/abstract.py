@@ -28,7 +28,10 @@ class AbstractLabelledCallable:
         elif isinstance(result, dict):
             return result
         elif len(self.output_names) == 1:
-            return {self.output_names[0]: result}
+            if isinstance(result, (tuple, list)):
+                return {self.output_names[0]: result[0]}
+            else:
+                return {self.output_names[0]: result}
         else:
             return {name: val for name, val in zip(self.output_names, result)}
 

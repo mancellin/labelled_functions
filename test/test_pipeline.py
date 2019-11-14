@@ -3,7 +3,7 @@
 
 import pytest
 
-from labelled_functions.pipeline import compose, pipeline
+from labelled_functions.pipeline import compose, pipeline, let
 
 from example_functions import *
 
@@ -62,6 +62,22 @@ def test_default_variables():
     assert pipe()['volume'] == 1.0
     assert pipe(x=10.0)['volume'] == 1000.0
 
+
+def test_let():
+    l = let(x=1.0)
+    assert l.input_names == []
+    assert l.output_names == ['x']
+    assert l() == (1.0,)
+    assert l.recorded_call() == {'x': 1.0}
+
+    pipe = pipeline([let(x=1.0), cube])
+    assert pipe()['volume'] == 1.0
+
+    pipe = pipeline([let(radius=1.0), cylinder_volume])
+    assert pipe(length=1.0)['volume'] == np.pi
+
+    pipe = pipeline([let(radius=1.0, length=1.0), cylinder_volume])
+    assert pipe()['volume'] == np.pi
 
 def test_compose():
     composed = compose([cylinder_volume, random_radius])

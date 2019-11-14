@@ -14,6 +14,8 @@ def compose(funcs, **kwargs):
 def pipeline(funcs, **kwargs):
     return LabelledPipeline(funcs, **kwargs)
 
+def let(**kwargs):
+    return LabelledFunction(lambda: tuple(kwargs.values()), name="setter", output_names=list(kwargs.keys()))
 
 # Internals
 
