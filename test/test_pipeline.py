@@ -3,7 +3,7 @@
 
 import pytest
 
-from labelled_functions.pipeline import compose, pipeline, let, relabel
+from labelled_functions.pipeline import compose, pipeline, let, relabel, show
 
 from example_functions import *
 
@@ -93,9 +93,13 @@ def test_relabel():
     assert pipe(foo=1.0)['moose'] == 1.0
 
 
+def test_show():
+    pipe = pipeline([show('x'), cube, show('x', 'volume', 'area')])
+    pipe(x=1.0)
+
+
 def test_compose():
     composed = compose([cylinder_volume, random_radius])
     assert composed.input_names == ['length']
     assert composed.output_names == ['volume']
-
 

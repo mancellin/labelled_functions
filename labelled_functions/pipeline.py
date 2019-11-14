@@ -7,6 +7,7 @@ from toolz.itertoolz import groupby
 from toolz.dicttoolz import merge
 
 # API
+# Builders
 
 def compose(funcs, **kwargs):
     return LabelledPipeline(list(reversed(funcs)), **kwargs)
@@ -14,19 +15,29 @@ def compose(funcs, **kwargs):
 def pipeline(funcs, **kwargs):
     return LabelledPipeline(funcs, **kwargs)
 
+# Tools
+
 def let(**kwargs):
     return LabelledFunction(lambda: tuple(kwargs.values()), name="setter", output_names=list(kwargs.keys()))
 
 def relabel(old, new):
-    # FIXME: Overly complicated implementation?
     def identity(**kwargs):
         return {new: kwargs[old]}
-    lf = LabelledFunction(identity, name=f"relabel {old} as {new}")
+    lf = LabelledFunction(identity, name=f"relabel {old} as {new}", output_names=[new])
     lf.input_names = [old]
-    lf.output_names = [new]
     return lf
 
-# Internals
+def show(*names):
+    def showing(**kwargs):
+        showed = {name: kwargs[name] for name in names}
+        print(showed)
+        return showed
+    lf = LabelledFunction(showing, name="showing " + " ".join(names), output_names=names)
+    lf.input_names = names
+    return lf
+
+
+# INTERNALS
 
 class LabelledPipeline(AbstractLabelledCallable):
     def __init__(self, funcs,
