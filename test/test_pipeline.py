@@ -58,6 +58,10 @@ def test_default_variables():
     assert pipe()['volume'] == 1.0
     assert pipe(x=10.0)['volume'] == 1000.0
 
+    pipe = pipeline([cube]).set_default(x=1.0)
+    assert pipe()['volume'] == 1.0
+    assert pipe(x=10.0)['volume'] == 1000.0
+
 
 def test_compose():
     composed = compose([cylinder_volume, random_radius])

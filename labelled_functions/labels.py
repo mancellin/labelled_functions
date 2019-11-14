@@ -104,12 +104,21 @@ class LabelledFunction(AbstractLabelledCallable):
                         pass
             self.output_names = output_names
 
+    def __copy__(self):
+        copied = LabelledFunction(self.function, name=self.name, output_names=self.output_names)
+        return copied
+
     def __str__(self):
         input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
         output_str = ", ".join(self.output_names) if len(self.output_names) > 0 else ""
         return f"{self.name}({input_str}) -> ({output_str})"
 
     def __call__(self, *args, **kwargs):
+        kwargs = {**self.default_values, **kwargs}
+        for i in range(len(args)):
+            if self.input_names[i] in self.default_values.keys():
+                del kwargs[self.input_names[i]]
+
         result = self.function.__call__(*args, **kwargs)
 
         if self._has_never_been_run:

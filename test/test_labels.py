@@ -87,3 +87,10 @@ def test_namespace():
     out_ds = LabelledFunction(cylinder_volume).apply_in_namespace(in_ds)
     assert 'volume' in out_ds.data_vars
 
+def test_set_default():
+    lc = label(cylinder_volume)
+    llc = lc.set_default(radius=1.0)
+    assert llc(length=1.0) == np.pi
+    lllc = lc.set_default(radius=1.0, length=1.0)
+    assert lllc() == np.pi
+

@@ -1,4 +1,5 @@
 from typing import Dict, Union
+from copy import copy
 from abc import ABC, abstractmethod
 
 import xarray as xr
@@ -30,6 +31,11 @@ class AbstractLabelledCallable:
             return {self.output_names[0]: result}
         else:
             return {name: val for name, val in zip(self.output_names, result)}
+
+    def set_default(self, **kwargs):
+        f = copy(self)
+        f.default_values = {**self.default_values, **kwargs}
+        return f
 
     def recorded_call(self, *args, **kwargs):
         """Call the function and return a dict with its inputs and outputs.
