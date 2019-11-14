@@ -108,6 +108,20 @@ class LabelledFunction(AbstractLabelledCallable):
         copied = LabelledFunction(self.function, name=self.name, output_names=self.output_names)
         return copied
 
+    def __or__(self, other):
+        if isinstance(other, LabelledFunction):
+            from labelled_functions.pipeline import pipeline
+            return pipeline([self, other])
+        else:
+            return NotImplemented
+
+    def __ror__(self, other):
+        if isinstance(other, LabelledFunction):
+            from labelled_functions.pipeline import pipeline
+            return pipeline([other, self])
+        else:
+            return NotImplemented
+
     def __str__(self):
         input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
         output_str = ", ".join(self.output_names) if len(self.output_names) > 0 else ""

@@ -77,6 +77,42 @@ class LabelledPipeline(AbstractLabelledCallable):
 
         return list(pipe_inputs), list(pipe_outputs)
 
+    def __or__(self, other):
+        if isinstance(other, LabelledFunction):
+            return pipeline(
+                [*self.funcs, other],
+                name=self.name,
+                return_intermediate_outputs=self.return_intermediate_outputs,
+                default_values={**self.default_values, **other.default_values},
+            )
+        elif isinstance(other, LabelledPipeline):
+            return pipeline(
+                [*self.funcs, *other.funcs],
+                name=f"{self.name} | {other.name}",
+                return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
+                default_values={**self.default_values, **other.default_values},
+            )
+        else:
+            return NotImplemented
+
+    def __ror__(self, other):
+        if isinstance(other, LabelledFunction):
+            return pipeline(
+                [other, *self.funcs],
+                name=self.name,
+                return_intermediate_outputs=self.return_intermediate_outputs,
+                default_values={**self.default_values, **other.default_values},
+            )
+        elif isinstance(other, LabelledPipeline):
+            return pipeline(
+                [*other.funcs, *self.funcs],
+                name=f"{self.name} | {other.name}",
+                return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
+                default_values={**self.default_values, **other.default_values},
+            )
+        else:
+            return NotImplemented
+
     def __call__(self, **namespace):
         if self.default_values is not None:
             namespace = {**self.default_values, **namespace}

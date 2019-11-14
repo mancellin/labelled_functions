@@ -3,7 +3,8 @@
 
 import pytest
 
-from labelled_functions.pipeline import compose, pipeline, let, relabel, show
+from labelled_functions.labels import label
+from labelled_functions.pipeline import *
 
 from example_functions import *
 
@@ -16,6 +17,13 @@ def test_pipeline():
 
     with pytest.raises(TypeError):
         pipe(length=1.0, potato=1.0)
+
+    # Creation with "|" symbol
+    pipe = label(random_radius) | label(cylinder_volume)
+    assert isinstance(pipe, LabelledPipeline)
+    assert pipe.input_names == ['length']
+    assert pipe.output_names == ['volume']
+    assert 0.0 < pipe(length=1.0)['volume'] < 2*compute_pi()
 
 
 def test_return_intermediate_outputs():
@@ -102,4 +110,10 @@ def test_compose():
     composed = compose([cylinder_volume, random_radius])
     assert composed.input_names == ['length']
     assert composed.output_names == ['volume']
+
+
+def test_vertical_line():
+    p = pipeline([cube])
+    pp = let(x=1.0) | p | show('area')
+    assert pp()['volume'] == 1.0
 
