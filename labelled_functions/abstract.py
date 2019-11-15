@@ -88,11 +88,98 @@ class AbstractLabelledCallable:
         namespace.update(outputs)
         return namespace
 
-    graph_function_style = {'style': 'filled', 'shape': 'oval'}
-    graph_input_style = {'shape': 'box'}
-    graph_output_style = {'shape': 'box'}
+    color_scheme = {
+        'blue':   {'light': '#88BBBB', 'main': '#226666', 'dark': '#003333'},
+        'red':    {'light': '#FFAAAA', 'main': '#113939', 'dark': '#550000'},
+        'yellow': {'light': '#FFE3AA', 'main': '#AA8439', 'dark': '#553900'},
+        'gray':   {'light': '#EEEEEE', 'main': '#777777', 'dark': '#222222'},
+    }
+    graph_function_style = {
+        'shape': 'oval', 'style': 'filled',
+        'color': color_scheme['blue']['main'],
+        'fontcolor': color_scheme['blue']['dark'],
+        'fillcolor': color_scheme['blue']['light'],
+    }
+    graph_input_style = {
+        'shape': 'box', 'style': 'filled',
+        'color': color_scheme['yellow']['main'],
+        'fontcolor': color_scheme['yellow']['dark'],
+        'fillcolor': color_scheme['yellow']['light'],
+    }
+    graph_optional_input_style = {
+        'shape': 'box', 'style': 'filled',
+        'color': color_scheme['gray']['main'],
+        'fontcolor': color_scheme['gray']['dark'],
+        'fillcolor': color_scheme['gray']['light'],
+    }
+    graph_output_style = {
+        'shape': 'box', 'style': 'filled',
+        'color': color_scheme['red']['main'],
+        'fontcolor': color_scheme['red']['dark'],
+        'fillcolor': color_scheme['red']['light'],
+    }
 
     @abstractmethod
-    def graph(self, **kwargs):
+    def _graph(self, **kwargs):
         pass
 
+    def graphviz(self):
+        inputs_nodes, output_nodes, function_nodes, dummy_nodes, edges = self._graph()
+
+        from graphviz import Digraph
+        G = Digraph(strict=False)
+        G.attr(rankdir='LR')
+
+        for f_name in function_nodes:
+            G.node(f_name, **self.graph_function_style)
+        for var_name in inputs_nodes:
+            if var_name in self.default_values.keys():
+                G.node(var_name, **self.graph_optional_input_style)
+            else:
+                G.node(var_name, **self.graph_input_style)
+        for var_name in output_nodes:
+            G.node(var_name, **self.graph_output_style)
+        for dn in dummy_nodes:
+            G.node(dn, shape='point')
+
+        for e in edges:
+            if e.start is None and e.label in inputs_nodes:
+                G.edge(e.label, e.end)
+            elif e.end is None and e.label in output_nodes:
+                G.edge(e.start, e.label)
+            elif e.start in dummy_nodes:
+                G.edge(e.start, e.end)
+            else:
+                G.edge(e.start, e.end, label=e.label)
+
+        return G
+
+    def pygraphviz(self):
+        inputs_nodes, output_nodes, function_nodes, dummy_nodes, edges = self._graph()
+
+        from pygraphviz import AGraph
+        G = AGraph(rankdir='LR', directed=True, strict=False)
+
+        for f_name in function_nodes:
+            G.add_node(f_name, **self.graph_function_style)
+        for var_name in inputs_nodes:
+            if var_name in self.default_values:
+                G.add_node(var_name, **self.graph_optional_input_style)
+            else:
+                G.add_node(var_name, **self.graph_input_style)
+        for var_name in output_nodes:
+            G.add_node(var_name, **self.graph_output_style)
+        for dn in dummy_nodes:
+            G.add_node(dn, shape='point')
+
+        for e in edges:
+            if e.start is None and e.label in inputs_nodes:
+                G.add_edge(e.label, e.end)
+            elif e.end is None and e.label in output_nodes:
+                G.add_edge(e.start, e.label)
+            elif e.start in dummy_nodes:
+                G.add_edge(e.start, e.end)
+            else:
+                G.add_edge(e.start, e.end, label=e.label)
+
+        return G

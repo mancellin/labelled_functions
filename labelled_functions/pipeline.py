@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from typing import Set
 from labelled_functions.abstract import AbstractLabelledCallable
 from labelled_functions.labels import Unknown, LabelledFunction
 from toolz.itertoolz import groupby
-from toolz.dicttoolz import merge
+from toolz.dicttoolz import merge, keyfilter
+from collections import namedtuple
 
 # API
 # Builders
@@ -126,45 +128,42 @@ class LabelledPipeline(AbstractLabelledCallable):
 
         return {name: val for name, val in namespace.items() if name in self.output_names}
 
-    def graph(self):
-        from pygraphviz import AGraph
-        G = AGraph(rankdir='LR', directed=True, strict=False)
+    def _graph(self):
+        Edge = namedtuple('Edge', ['start', 'label', 'end'])
 
-        pipe_inputs = set()
+        pipe_inputs: Set[str] = set()
+        pipe_outputs: Set[str] = set()
+        edges: Set[Edge] = set()
         last_modified = {}  # variable name => function that returned it last
-        pipe_outputs = set()
+
         for f in self.funcs:
-            G.add_node(f.name, **graph_function_style)
             for var_name in f.input_names:
-                pipe_outputs -= {var_name}
-                if var_name not in last_modified:
-                    if var_name not in pipe_inputs:
-                        pipe_inputs.add(var_name)
-                        G.add_node(var_name, **graph_input_style)
-                    G.add_edge(var_name, f.name)
+                if var_name in last_modified:  # This variable is the output of a previous function.
+                    pipe_outputs -= {var_name}  # If it was a global output, it is not anymore.
+                    edges.add(Edge(last_modified[var_name], var_name, f.name))
                 else:
-                    G.add_edge(last_modified[var_name], f.name, label=var_name)
+                    pipe_inputs.add(var_name)  # The variable must be a global input.
+                    edges.add(Edge(None, var_name, f.name))
+
             for var_name in f.output_names:
                 last_modified[var_name] = f.name
-                if var_name not in pipe_inputs:
-                    pipe_outputs.add(var_name)
+                pipe_outputs.add(var_name)
 
-        for var_names in pipe_outputs:
-            G.add_node(var_name, **graph_output_style)
-            G.add_edge(last_modified[var_name], var_name)
+        for var_name in pipe_outputs:
+            edges.add(Edge(last_modified[var_name], var_name, None))
 
-        # Fuse several uses of the same function output
-        for begin, edges in groupby(lambda e: e[0], G.edges()).items():
-            if begin in [f.name for f in funcs]:
-                for label, edges_with_label in groupby(lambda e: e.attr['label'], edges).items():
-                    if len(edges_with_label) > 1:
-                        G.delete_edges_from(edges_with_label)
-                        node_name = begin + '_' + label
-                        G.add_node(node_name, shape='point')
-                        G.add_edge(begin, node_name, arrowhead='none', label=label)
-                        for edge in edges_with_label:
-                            G.add_edge(node_name, edge[1])
+        # Fuse several uses of the same start and label (i.e. outputs of the
+        # same function used in several other functions)
+        dummy_nodes = set()
+        for ((start, label), similar_edges) \
+                in groupby(lambda e: (e.start, e.label), edges).items():
+            if start is not None and len(similar_edges) > 1:
+                new_node_label = f"{start}_{label}"
+                dummy_nodes.add(new_node_label)
+                edges.add(Edge(start, label, new_node_label))
+                for e in similar_edges:
+                    edges.add(Edge(new_node_label, label, e[2]))
+                    edges.remove(e)
 
-        G.draw('/home/ancellin/test.png', prog='dot')
-        return G
-
+        funcs_nodes = set((f.name for f in self.funcs))
+        return pipe_inputs, pipe_outputs, funcs_nodes, dummy_nodes, edges

@@ -3,6 +3,7 @@
 
 from typing import List
 from inspect import Parameter, Signature, getsource
+from collections import namedtuple
 from functools import update_wrapper
 
 import parso
@@ -154,18 +155,12 @@ class LabelledFunction(AbstractLabelledCallable):
         else:
             return [self.name]
 
-    def graph(self):
-        from pygraphviz import AGraph
-        graph = AGraph(rankdir='LR', directed=True, strict=False)
-        graph.add_node(self.name, **self.graph_function_style)
-        for input_name in self.input_names:
-            graph.add_node(input_name, **self.graph_output_style)
-            graph.add_edge(input_name, self.name)
-        for output_name in self.output_names:
-            graph.add_node(output_name, **self.graph_output_style)
-            graph.add_edge(self.name, output_name)
-        return graph
+    def _graph(self):
+        Edge = namedtuple('Edge', ['start', 'label', 'end'])
 
+        edges = set([Edge(None, ivar, self.name) for ivar in self.input_names])
+        edges |= set([Edge(self.name, ovar, None) for ovar in self.output_names])
+        return set(self.input_names), set(self.output_names), set([self.name]), set(), edges
 
 
 # HELPER FUNCTIONS
