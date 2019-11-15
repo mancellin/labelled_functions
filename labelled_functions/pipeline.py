@@ -53,31 +53,14 @@ class LabelledPipeline(AbstractLabelledCallable):
 
         self.return_intermediate_outputs = return_intermediate_outputs
 
-        self.input_names, self.output_names = self._identify_inputs_and_outputs()
+        pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph()
+        self.input_names = list(pipe_inputs)
+        self.output_names = list(pipe_outputs)
 
         if default_values is None:
-            default_values = {}
-        self.default_values = default_values
-
-    def _identify_inputs_and_outputs(self):
-        all_inputs = [set(f.input_names) for f in self.funcs]
-        all_outputs = [set(f.output_names) for f in self.funcs]
-
-        pipe_inputs, intermediate = set(), set()
-        for f_inputs, f_outputs in zip(all_inputs, all_outputs):
-
-            # The inputs that are not already in the set of intermediate variables
-            # are inputs of the whole pipeline
-            pipe_inputs = pipe_inputs.union(f_inputs - intermediate)
-
-            intermediate = intermediate.union(f_outputs)
-
-        pipe_outputs = intermediate.copy()
-        if not self.return_intermediate_outputs:
-            for f_inputs in all_inputs:
-                pipe_outputs = pipe_outputs - f_inputs
-
-        return list(pipe_inputs), list(pipe_outputs)
+            self.default_values = sub_default_values
+        else:
+            self.default_values = {**sub_default_values, **default_values}
 
     def __or__(self, other):
         if isinstance(other, LabelledFunction):
@@ -135,14 +118,18 @@ class LabelledPipeline(AbstractLabelledCallable):
         pipe_outputs: Set[str] = set()
         edges: Set[Edge] = set()
         last_modified = {}  # variable name => function that returned it last
+        default_values = {}
 
         for f in self.funcs:
             for var_name in f.input_names:
                 if var_name in last_modified:  # This variable is the output of a previous function.
-                    pipe_outputs -= {var_name}  # If it was a global output, it is not anymore.
+                    if not self.return_intermediate_outputs:
+                        pipe_outputs -= {var_name}  # If it was a global output, it is not anymore.
                     edges.add(Edge(last_modified[var_name], var_name, f.name))
                 else:
                     pipe_inputs.add(var_name)  # The variable must be a global input.
+                    if var_name in f.default_values:
+                        default_values[var_name] = f.default_values[var_name]
                     edges.add(Edge(None, var_name, f.name))
 
             for var_name in f.output_names:
@@ -166,4 +153,5 @@ class LabelledPipeline(AbstractLabelledCallable):
                     edges.remove(e)
 
         funcs_nodes = set((f.name for f in self.funcs))
-        return pipe_inputs, pipe_outputs, funcs_nodes, dummy_nodes, edges
+        return (pipe_inputs, default_values, pipe_outputs,
+                funcs_nodes, dummy_nodes, edges)

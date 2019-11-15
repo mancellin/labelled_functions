@@ -160,7 +160,7 @@ class LabelledFunction(AbstractLabelledCallable):
 
         edges = set([Edge(None, ivar, self.name) for ivar in self.input_names])
         edges |= set([Edge(self.name, ovar, None) for ovar in self.output_names])
-        return set(self.input_names), set(self.output_names), set([self.name]), set(), edges
+        return set(self.input_names), self.default_values, set(self.output_names), set([self.name]), set(), edges
 
 
 # HELPER FUNCTIONS
