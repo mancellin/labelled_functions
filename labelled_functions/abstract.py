@@ -170,6 +170,8 @@ class AbstractLabelledCallable:
                 add_edge(e.start, "output__" + e.label)
             elif e.start in dummy_nodes:
                 add_edge(e.start, e.end)
+            elif e.end in dummy_nodes:
+                add_edge(e.start, e.end, label=e.label, arrowhead='none')
             else:
                 add_edge(e.start, e.end, label=e.label)
 
