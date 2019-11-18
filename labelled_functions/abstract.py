@@ -123,18 +123,18 @@ class AbstractLabelledCallable:
     def _graph(self, **kwargs):
         pass
 
-    def graph(self, backend='graphviz'):
+    def graph(self, backend='graphviz', rankdir='LR'):
         inputs_nodes, default_values, output_nodes, function_nodes, dummy_nodes, edges = self._graph()
 
         if backend == 'graphviz':
             from graphviz import Digraph
             G = Digraph(strict=False)
-            G.attr(rankdir='LR')
+            G.attr(rankdir=rankdir)
             add_node = G.node
             add_edge = G.edge
         elif backend == 'pygraphviz':
             from pygraphviz import AGraph
-            G = AGraph(rankdir='LR', directed=True, strict=False)
+            G = AGraph(rankdir=rankdir, directed=True, strict=False)
             add_node = G.add_node
             add_edge = G.add_edge
 
@@ -150,22 +150,22 @@ class AbstractLabelledCallable:
             add_node(f_name, **self.graph_function_style)
         for var_name in inputs_nodes:
             if var_name in self.default_values.keys():
-                add_node(var_name,
+                add_node("input__" + var_name,
                        label=format_node_label(var_name, self.default_values[var_name]),
                        **self.graph_optional_input_style,
                 )
             else:
-                add_node(var_name, **self.graph_input_style)
+                add_node("input__" + var_name, label=var_name, **self.graph_input_style)
         for var_name in output_nodes:
-            add_node(var_name, **self.graph_output_style)
+            add_node("output__" + var_name, label=var_name, **self.graph_output_style)
         for dn in dummy_nodes:
             add_node(dn, shape='point')
 
         for e in edges:
             if e.start is None and e.label in inputs_nodes:
-                add_edge(e.label, e.end)
+                add_edge("input__" + e.label, e.end)
             elif e.end is None and e.label in output_nodes:
-                add_edge(e.start, e.label)
+                add_edge(e.start, "output__" + e.label)
             elif e.start in dummy_nodes:
                 add_edge(e.start, e.end)
             else:
