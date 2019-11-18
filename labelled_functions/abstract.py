@@ -139,7 +139,9 @@ class AbstractLabelledCallable:
             add_edge = G.add_edge
 
         def format_node_label(name, value):
-            if isinstance(value, (int, float, bool)):
+            if value is None:
+                return f"{name}=None"
+            elif isinstance(value, (int, float, bool)):
                 return f"{name}={str(value)}"
             elif isinstance(value, str) and len(value) < 10:
                 return f"{name}=\"{str(value)}\""
