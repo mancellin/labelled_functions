@@ -68,14 +68,14 @@ class LabelledPipeline(AbstractLabelledCallable):
                 [*self.funcs, other],
                 name=self.name,
                 return_intermediate_outputs=self.return_intermediate_outputs,
-                default_values={**self.default_values, **other.default_values},
+                default_values={**self.default_values},
             )
         elif isinstance(other, LabelledPipeline):
             return pipeline(
                 [*self.funcs, *other.funcs],
                 name=f"{self.name} | {other.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
-                default_values={**self.default_values, **other.default_values},
+                default_values={**self.default_values},
             )
         else:
             return NotImplemented
@@ -86,14 +86,14 @@ class LabelledPipeline(AbstractLabelledCallable):
                 [other, *self.funcs],
                 name=self.name,
                 return_intermediate_outputs=self.return_intermediate_outputs,
-                default_values={**self.default_values, **other.default_values},
+                default_values={**other.default_values},
             )
         elif isinstance(other, LabelledPipeline):
             return pipeline(
                 [*other.funcs, *self.funcs],
                 name=f"{self.name} | {other.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
-                default_values={**self.default_values, **other.default_values},
+                default_values={**other.default_values},
             )
         else:
             return NotImplemented
