@@ -16,16 +16,16 @@ class AbstractLabelledCallable:
     def __call__(self, *args, **kwargs):
         pass
 
-    def _check_output_consistency(self, result):
+    def _output_is_consistent(self, result):
         if result is None:
-            assert len(self.output_names) == 0
+            return len(self.output_names) == 0
         elif isinstance(result, (list, tuple)) and len(result) > 1:
-            assert len(result) == len(self.output_names)
+            return len(result) == len(self.output_names)
         elif isinstance(result, dict):
-            assert set(result.keys()) == set(self.output_names)
+            return set(result.keys()) == set(self.output_names)
         # TODO: Handle named tuples
         else:
-            assert len(self.output_names) == 1
+            return len(self.output_names) == 1
 
     def _output_as_dict(self, result) -> Dict[str, Any]:
         if result is None:

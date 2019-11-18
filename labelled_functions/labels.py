@@ -141,7 +141,8 @@ class LabelledFunction(AbstractLabelledCallable):
             if self.output_names is Unknown:
                 self.output_names = self._guess_output_names_from(result)
             else:
-                self._check_output_consistency(result)
+                if not self._output_is_consistent(result):
+                    raise TypeError(f"Inconsistent output in {self.name}!")
         return result
 
     def _guess_output_names_from(self, result):
