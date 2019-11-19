@@ -69,14 +69,14 @@ class LabelledPipeline(AbstractLabelledCallable):
                 [*self.funcs, other],
                 name=self.name,
                 return_intermediate_outputs=self.return_intermediate_outputs,
-                default_values={**self.default_values},
+                default_values=_merge_default_values(self, other),
             )
         elif isinstance(other, LabelledPipeline):
             return pipeline(
                 [*self.funcs, *other.funcs],
                 name=f"{self.name} | {other.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
-                default_values={**self.default_values},
+                default_values=_merge_default_values(self, other),
             )
         else:
             return NotImplemented
@@ -87,14 +87,14 @@ class LabelledPipeline(AbstractLabelledCallable):
                 [other, *self.funcs],
                 name=self.name,
                 return_intermediate_outputs=self.return_intermediate_outputs,
-                default_values={**other.default_values},
+                default_values=_merge_default_values(other, self),
             )
         elif isinstance(other, LabelledPipeline):
             return pipeline(
                 [*other.funcs, *self.funcs],
                 name=f"{self.name} | {other.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
-                default_values={**other.default_values},
+                default_values=_merge_default_values(other, self),
             )
         else:
             return NotImplemented
@@ -156,3 +156,9 @@ class LabelledPipeline(AbstractLabelledCallable):
         funcs_nodes = set((f.name for f in self.funcs))
         return (pipe_inputs, default_values, pipe_outputs,
                 funcs_nodes, dummy_nodes, edges)
+
+def _merge_default_values(first, second):
+    return {
+        **first.default_values,
+        **{name: value for name, value in second.default_values.items() if name not in first.output_names},
+    }
