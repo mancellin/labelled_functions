@@ -20,7 +20,8 @@ def pipeline(funcs, **kwargs):
 # Tools
 
 def let(**kwargs):
-    return LabelledFunction(lambda: tuple(kwargs.values()), name="setter", output_names=list(kwargs.keys()))
+    name = "let " + ", ".join((f"{name}={value}" for name, value in kwargs.items()))
+    return LabelledFunction(lambda: tuple(kwargs.values()), name=name, output_names=list(kwargs.keys()))
 
 def relabel(old, new):
     def identity(**kwargs):
