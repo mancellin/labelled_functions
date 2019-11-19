@@ -39,7 +39,7 @@ def test_output_checking():
     assert la._has_never_been_run
 
     la.output_names = ['moose', 'llama']
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         la(1, 2)
 
 
