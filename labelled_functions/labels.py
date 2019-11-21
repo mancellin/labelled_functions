@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from typing import List
+from copy import copy
 from inspect import Parameter, Signature, getsource
 from collections import namedtuple
 from functools import update_wrapper
@@ -66,7 +67,13 @@ class LabelledFunction(AbstractLabelledCallable):
         else:
             return super().__new__(cls)
 
-    def __init__(self, f, *, name=None, output_names=Unknown, hidden_inputs=None):
+    def __init__(self, f, *,
+                 name=None,
+                 output_names=Unknown,
+                 default_values=None,
+                 hidden_inputs=None,
+                 ):
+
         if isinstance(f, AbstractLabelledCallable):
             pass  # Do not rerun __init__ when idempotent call.
         else:
@@ -85,7 +92,11 @@ class LabelledFunction(AbstractLabelledCallable):
             # INPUT
             self.input_names = [name for name in self._signature.parameters]
 
-            self.default_values = {name: self._signature.parameters[name].default for name in self._signature.parameters if self._signature.parameters[name].default is not Parameter.empty}
+            if default_values is None:
+                p = self._signature.parameters
+                default_values = {name: p[name].default for name in p
+                                  if p[name].default is not Parameter.empty}
+            self.default_values = default_values
 
             if hidden_inputs is None:
                 hidden_inputs = set()
@@ -110,7 +121,13 @@ class LabelledFunction(AbstractLabelledCallable):
             self.output_names = output_names
 
     def __copy__(self):
-        copied = LabelledFunction(self.function, name=self.name, output_names=self.output_names)
+        copied = LabelledFunction(
+            self.function,
+            name=self.name,
+            output_names=copy(self.output_names),
+            default_values=copy(self.default_values),
+            hidden_inputs=copy(self.hidden_inputs),
+        )
         return copied
 
     def __or__(self, other):

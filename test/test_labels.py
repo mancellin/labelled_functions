@@ -95,6 +95,7 @@ def test_set_default():
     lc = label(cylinder_volume)
     llc = lc.set_default(radius=1.0)
     assert llc(length=1.0) == np.pi
+    assert copy(llc)(length=1.0) == np.pi
     lllc = lc.set_default(radius=1.0, length=1.0)
     assert lllc() == np.pi
 
