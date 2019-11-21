@@ -3,6 +3,7 @@
 
 import pytest
 import xarray as xr
+from copy import copy
 
 from hypothesis import given, settings
 from hypothesis.strategies import floats
@@ -64,10 +65,6 @@ def test_recorder():
     assert label(optional_add).recorded_call(y=a, x=b) == {'x': b, 'y': a, 'x+y': a+b}
     assert label(optional_add).recorded_call(y=a)      == {'x': 0, 'y': a, 'x+y': a}
 
-    assert label(optional_add).hide('x').recorded_call(y=a) == {'y': a, 'x+y': a}
-    assert label(optional_add).hide('y').recorded_call(y=a) == {'x': 0, 'x+y': a}
-    assert label(optional_add).hide('y').recorded_call() == {'x': 0, 'x+y': 0}
-
     assert label(cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
     assert label(annotated_cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
 
@@ -96,6 +93,27 @@ def test_set_default():
     llc = lc.set_default(radius=1.0)
     assert llc(length=1.0) == np.pi
     assert copy(llc)(length=1.0) == np.pi
+
     lllc = lc.set_default(radius=1.0, length=1.0)
     assert lllc() == np.pi
+
+    rllc = lllc.reset_default('radius', 'length')
+    assert rllc.default_values == {}
+    with pytest.raises(TypeError):
+        rllc()
+
+def test_hide():
+    a = np.random.rand(1)[0]
+    assert label(optional_add).hide('x').recorded_call(y=a) == {'y': a, 'x+y': a}
+    assert label(optional_add).hide('y').recorded_call(y=a) == {'x': 0, 'x+y': a}
+    assert label(optional_add).hide('y').recorded_call() == {'x': 0, 'x+y': 0}
+    assert label(optional_add).hide_all_but('y').recorded_call(y=) == {'y': 0, 'x+y': 0}
+
+def test_fix():
+    lc = label(cylinder_volume)
+    llc = lc.fix(radius=1.0)
+    assert llc.default_values == {'radius': 1.0}
+    assert llc.hidden_inputs == {'radius'}
+    assert llc(length=1.0) == np.pi
+    assert llc.recorded_call(length=1.0) == {'length': 1.0, 'volume': np.pi}
 

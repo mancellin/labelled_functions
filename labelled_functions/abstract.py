@@ -41,9 +41,15 @@ class AbstractLabelledCallable:
         else:
             return {name: val for name, val in zip(self.output_names, result)}
 
-    def set_default(self, **kwargs):
+    def set_default(self, **names_and_values):
         f = copy(self)
-        f.default_values = {**self.default_values, **kwargs}
+        f.default_values = {**self.default_values, **names_and_values}
+        return f
+
+    def reset_default(self, *names):
+        f = copy(self)
+        for name in names:
+            del f.default_values[name]
         return f
 
     def hide(self, *hidden_names):
@@ -52,9 +58,10 @@ class AbstractLabelledCallable:
         return f
 
     def hide_all_but(self, *not_hidden_names):
-        f = copy(self)
-        f.hidden_inputs = set(self.input_names) - set(not_hidden_names)
-        return f
+        return self.hide(*set(self.input_names) - set(not_hidden_names))
+
+    def fix(self, **names_and_values):
+        return self.set_default(**names_and_values).hide(*names_and_values.keys())
 
     def recorded_call(self, *args, **kwargs) -> Dict[str, Any]:
         """Call the function and return a dict with its inputs and outputs.
