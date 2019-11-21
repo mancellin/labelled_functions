@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from labelled_functions import label
 from labelled_functions.maps import *
 
 from example_functions import *
@@ -70,6 +71,14 @@ def test_pandas_map(a, b):
                               'volume': a**3,
                               }
                         ).set_index('x')
+    )
+    assert np.all(
+        pandas_map(label(annotated_cube).hide('x'), a)
+        == pd.DataFrame(data={'length': 12*a,
+                              'area': 6*a**2,
+                              'volume': a**3,
+                              }
+                        )
     )
 
 

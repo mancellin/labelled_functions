@@ -66,7 +66,7 @@ class LabelledFunction(AbstractLabelledCallable):
         else:
             return super().__new__(cls)
 
-    def __init__(self, f, *, name=None, output_names=Unknown):
+    def __init__(self, f, *, name=None, output_names=Unknown, hidden_inputs=None):
         if isinstance(f, AbstractLabelledCallable):
             pass  # Do not rerun __init__ when idempotent call.
         else:
@@ -86,6 +86,10 @@ class LabelledFunction(AbstractLabelledCallable):
             self.input_names = [name for name in self._signature.parameters]
 
             self.default_values = {name: self._signature.parameters[name].default for name in self._signature.parameters if self._signature.parameters[name].default is not Parameter.empty}
+
+            if hidden_inputs is None:
+                hidden_inputs = set()
+            self.hidden_inputs = hidden_inputs
 
             # OUTPUT
             self._has_never_been_run = True

@@ -64,6 +64,10 @@ def test_recorder():
     assert label(optional_add).recorded_call(y=a, x=b) == {'x': b, 'y': a, 'x+y': a+b}
     assert label(optional_add).recorded_call(y=a)      == {'x': 0, 'y': a, 'x+y': a}
 
+    assert label(optional_add).hide('x').recorded_call(y=a) == {'y': a, 'x+y': a}
+    assert label(optional_add).hide('y').recorded_call(y=a) == {'x': 0, 'x+y': a}
+    assert label(optional_add).hide('y').recorded_call() == {'x': 0, 'x+y': 0}
+
     assert label(cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
     assert label(annotated_cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
 

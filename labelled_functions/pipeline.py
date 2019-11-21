@@ -43,8 +43,11 @@ def show(*names):
 # INTERNALS
 
 class LabelledPipeline(AbstractLabelledCallable):
-    def __init__(self, funcs,
-                 *, name=None, return_intermediate_outputs=False, default_values=None
+    def __init__(self,
+                 funcs, *,
+                 name=None, default_values=None,
+                 hidden_inputs=None,
+                 return_intermediate_outputs=False
                  ):
         self.funcs = [LabelledFunction(f) for f in funcs]
 
@@ -57,6 +60,10 @@ class LabelledPipeline(AbstractLabelledCallable):
         pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph()
         self.input_names = list(pipe_inputs)
         self.output_names = list(pipe_outputs)
+
+        if hidden_inputs is None:
+            hidden_inputs = set()
+        self.hidden_inputs = hidden_inputs
 
         if default_values is None:
             self.default_values = sub_default_values

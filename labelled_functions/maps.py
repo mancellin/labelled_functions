@@ -23,7 +23,12 @@ def recorded_map(f, *args, **kwargs):
 
 def pandas_map(f, *args, **kwargs):
     f = LabelledFunction(f)
-    return pd.DataFrame(list(recorded_map(f, *args, **kwargs))).set_index(f.input_names)
+    data = pd.DataFrame(list(recorded_map(f, *args, **kwargs)))
+    indices = [name for name in f.input_names if name not in f.hidden_inputs]
+    if len(indices) > 0:
+        return data.set_index(indices)
+    else:
+        return data
 
 # Tools
 

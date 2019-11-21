@@ -1,4 +1,4 @@
-from typing import List, Dict, Union, Any
+from typing import Set, List, Dict, Union, Any
 from copy import copy
 from abc import ABC, abstractmethod
 
@@ -11,6 +11,7 @@ class AbstractLabelledCallable:
     input_names: List[str]
     output_names: List[str]
     default_values: Dict[str, Any]  # with keys in input_names
+    hidden_inputs = Set[str]  # with keys in input_names
 
     @abstractmethod
     def __call__(self, *args, **kwargs):
@@ -45,6 +46,16 @@ class AbstractLabelledCallable:
         f.default_values = {**self.default_values, **kwargs}
         return f
 
+    def hide(self, *hidden_names):
+        f = copy(self)
+        f.hidden_inputs = self.hidden_inputs | set(hidden_names)
+        return f
+
+    def hide_all_but(self, *not_hidden_names):
+        f = copy(self)
+        f.hidden_inputs = set(self.input_names) - set(not_hidden_names)
+        return f
+
     def recorded_call(self, *args, **kwargs) -> Dict[str, Any]:
         """Call the function and return a dict with its inputs and outputs.
 
@@ -67,6 +78,7 @@ class AbstractLabelledCallable:
         {'x': 5, 'length': 60, 'area': 150, 'volume': 125}
         """
         inputs = {**self.default_values, **{name: val for name, val in zip(self.input_names, args)}, **kwargs}
+        inputs = {name: inputs[name] for name in inputs if name not in self.hidden_inputs}  # Drop hidden inputs
         outputs = self._output_as_dict(self.__call__(*args, **kwargs))
         return {**inputs, **outputs}
 
@@ -151,6 +163,8 @@ class AbstractLabelledCallable:
         for f_name in function_nodes:
             add_node(f_name, **self.graph_function_style)
         for var_name in inputs_nodes:
+            if var_name in self.hidden_inputs:
+                pass
             if var_name in self.default_values.keys():
                 add_node("input__" + var_name,
                        label=format_node_label(var_name, self.default_values[var_name]),
@@ -164,7 +178,7 @@ class AbstractLabelledCallable:
             add_node(dn, shape='point')
 
         for e in edges:
-            if e.start is None and e.label in inputs_nodes:
+            if e.start is None and e.label in inputs_nodes and e.label not in self.hidden_inputs:
                 add_edge("input__" + e.label, e.end)
             elif e.end is None and e.label in output_nodes:
                 add_edge(e.start, "output__" + e.label)
