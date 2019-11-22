@@ -32,6 +32,16 @@ def pandas_map(f, *args, **kwargs):
 
 # Tools
 
+def parallel_recorded_map(f, *args, **kwargs):
+    # First test
+    from joblib import Parallel
+    f = LabelledFunction(f)
+    dict_of_lists = identify_passed_ranges(f.input_names, args, kwargs)
+    list_of_inputs = list(lzip_with_default_values(dict_of_lists, defaults=f.default_values))
+    list_of_outputs = Parallel(n_jobs=4)((f.function, tuple(), inp) for inp in list_of_inputs)
+    return list_of_outputs
+
+
 def identify_passed_ranges(input_names, args, kwargs) -> dict:
     """When a dataframe or a dataset is passed, transfrom it into a dict of vectors"""
     if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pd.DataFrame):
