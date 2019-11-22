@@ -42,11 +42,39 @@ year
 
 ## Example: interact with Pandas dataframe
 
-TODO
+```python
+import numpy as np
+from numpy import pi
+import pandas as pd
+import labelled_functions as lf
+
+my_cylinders = pd.DataFrame(
+    [[1.4, 2.0, 'red'],
+     [5.2, 3.2, 'blue'],
+     [9.1, 3.0, 'red'],
+     [1.2, 1.9, 'green']],
+    columns=['radius', 'length', 'color']
+)
+
+def cylinder_sizes(radius, length):
+    volume = length * 2*pi*radius**2
+    area = 4*pi*radius**2 + length*2*pi*radius
+    return volume, area
+```
+
+```python
+>>> print(lf.pandas_map(cylinder_sizes, my_cylinders))
+                    volume         area
+radius length
+1.4    2.0       24.630086    42.223005
+5.2    3.2      543.671458   444.346865
+9.1    3.0     1560.931726  1212.152109
+1.2    1.9       17.190795    32.421236
+```
 
 # Lightweight pipeline builder
 
-## Example
+## Functional-ish programming
 
 TODO	
 
