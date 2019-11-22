@@ -172,7 +172,7 @@ class AbstractLabelledCallable:
         for var_name in inputs_nodes:
             if var_name in self.hidden_inputs:
                 pass
-            if var_name in self.default_values.keys():
+            elif var_name in self.default_values.keys():
                 add_node("input__" + var_name,
                        label=format_node_label(var_name, self.default_values[var_name]),
                        **self.graph_optional_input_style,
@@ -185,8 +185,9 @@ class AbstractLabelledCallable:
             add_node(dn, shape='point')
 
         for e in edges:
-            if e.start is None and e.label in inputs_nodes and e.label not in self.hidden_inputs:
-                add_edge("input__" + e.label, e.end)
+            if e.start is None and e.label in inputs_nodes:
+                if e.label not in self.hidden_inputs:
+                    add_edge("input__" + e.label, e.end)
             elif e.end is None and e.label in output_nodes:
                 add_edge(e.start, "output__" + e.label)
             elif e.start in dummy_nodes:
