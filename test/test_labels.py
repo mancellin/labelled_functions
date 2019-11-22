@@ -107,7 +107,7 @@ def test_hide():
     assert label(optional_add).hide('x').recorded_call(y=a) == {'y': a, 'x+y': a}
     assert label(optional_add).hide('y').recorded_call(y=a) == {'x': 0, 'x+y': a}
     assert label(optional_add).hide('y').recorded_call() == {'x': 0, 'x+y': 0}
-    assert label(optional_add).hide_all_but('y').recorded_call(y=) == {'y': 0, 'x+y': 0}
+    assert label(optional_add).hide_all_but('y').recorded_call() == {'y': 0, 'x+y': 0}
 
 def test_fix():
     lc = label(cylinder_volume)
