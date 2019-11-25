@@ -72,6 +72,7 @@ class LabelledFunction(AbstractLabelledCallable):
                  output_names=Unknown,
                  default_values=None,
                  hidden_inputs=None,
+                 _input_names=None,
                  ):
 
         if isinstance(f, AbstractLabelledCallable):
@@ -87,13 +88,19 @@ class LabelledFunction(AbstractLabelledCallable):
                     name = "unnamed_function"
             self.name = name
 
-            self._signature = Signature.from_callable(f)
+            if _input_names is None or default_values is None or output_names is None:
+                _signature = Signature.from_callable(f)
 
             # INPUT
-            self.input_names = [name for name in self._signature.parameters]
+            if _input_names is None:
+                self._input_names = [name for name in _signature.parameters]
+            else:
+                # Should not be done by users. Only in built-in function like copy().
+                self._input_names = _input_names
+
 
             if default_values is None:
-                p = self._signature.parameters
+                p = _signature.parameters
                 default_values = {name: p[name].default for name in p
                                   if p[name].default is not Parameter.empty}
             self.default_values = default_values
@@ -106,9 +113,9 @@ class LabelledFunction(AbstractLabelledCallable):
             self._has_never_been_run = True
 
             if output_names is Unknown:
-                if self._signature.return_annotation is not Signature.empty:
-                    if isinstance(self._signature.return_annotation, (tuple, list)):
-                        output_names = list(self._signature.return_annotation)
+                if _signature.return_annotation is not Signature.empty:
+                    if isinstance(_signature.return_annotation, (tuple, list)):
+                        output_names = list(_signature.return_annotation)
                     else:
                         output_names = [self._signature.return_annotation]
 
@@ -120,10 +127,19 @@ class LabelledFunction(AbstractLabelledCallable):
                         pass
             self.output_names = output_names
 
+    @property
+    def input_names(self):
+        return self._input_names
+
+    @input_names.setter
+    def input_names(self, _):
+        raise AttributeError("Input names of a labelled function should not be changed manually.")
+
     def __copy__(self):
         copied = LabelledFunction(
             self.function,
             name=self.name,
+            _input_names=copy(self.input_names),
             output_names=copy(self.output_names),
             default_values=copy(self.default_values),
             hidden_inputs=copy(self.hidden_inputs),

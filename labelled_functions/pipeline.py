@@ -26,8 +26,7 @@ def let(**kwargs):
 def relabel(old, new):
     def identity(**kwargs):
         return {new: kwargs[old]}
-    lf = LabelledFunction(identity, name=f"relabel {old} as {new}", output_names=[new])
-    lf.input_names = [old]
+    lf = LabelledFunction(identity, name=f"relabel {old} as {new}", _input_names=[old], output_names=[new])
     return lf
 
 def show(*names):
@@ -35,8 +34,7 @@ def show(*names):
         showed = {name: kwargs[name] for name in names}
         print(showed)
         return showed
-    lf = LabelledFunction(showing, name="showing " + " ".join(names), output_names=names)
-    lf.input_names = names
+    lf = LabelledFunction(showing, name="showing " + " ".join(names), _input_names=names, output_names=names)
     return lf
 
 
