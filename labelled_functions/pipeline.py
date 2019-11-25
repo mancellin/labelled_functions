@@ -2,11 +2,12 @@
 # coding: utf-8
 
 from typing import Set
-from labelled_functions.abstract import AbstractLabelledCallable
-from labelled_functions.labels import Unknown, LabelledFunction
+from collections import namedtuple
 from toolz.itertoolz import groupby
 from toolz.dicttoolz import merge, keyfilter
-from collections import namedtuple
+
+from labelled_functions.abstract import AbstractLabelledCallable
+from labelled_functions.labels import Unknown, LabelledFunction
 
 # API
 # Builders
@@ -21,7 +22,7 @@ def pipeline(funcs, **kwargs):
 
 def let(**kwargs):
     name = "let " + ", ".join((f"{name}={value}" for name, value in kwargs.items()))
-    return LabelledFunction(lambda: tuple(kwargs.values()), name=name, output_names=list(kwargs.keys()))
+    return LabelledFunction(lambda: tuple(kwargs.values()), name=name, _input_names=[], output_names=list(kwargs.keys()))
 
 def relabel(old, new):
     def identity(**kwargs):
@@ -43,8 +44,7 @@ def show(*names):
 class LabelledPipeline(AbstractLabelledCallable):
     def __init__(self,
                  funcs, *,
-                 name=None, default_values=None,
-                 hidden_inputs=None,
+                 name=None, default_values=None, hidden_inputs=None,
                  return_intermediate_outputs=False
                  ):
         self.funcs = [LabelledFunction(f) for f in funcs]
@@ -55,6 +55,9 @@ class LabelledPipeline(AbstractLabelledCallable):
         self.__name__ = name
 
         self.return_intermediate_outputs = return_intermediate_outputs
+
+        if any(f.output_names is Unknown for f in self.funcs):
+            raise AttributeError("Cannot build a pipeline with a function whose outputs are unknown.")
 
         pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph()
         self.input_names = list(pipe_inputs)
@@ -68,6 +71,8 @@ class LabelledPipeline(AbstractLabelledCallable):
             self.default_values = sub_default_values
         else:
             self.default_values = {**sub_default_values, **default_values}
+
+        super().__init__()
 
     def __or__(self, other):
         if isinstance(other, LabelledFunction):
@@ -106,17 +111,14 @@ class LabelledPipeline(AbstractLabelledCallable):
             return NotImplemented
 
     def __call__(self, **namespace):
-        if self.default_values is not None:
-            namespace = {**self.default_values, **namespace}
-
-        superfluous_inputs = set(namespace.keys()) - set(self.input_names)
-        if len(superfluous_inputs) > 0:
-            raise TypeError(f"Pipeline got unexpected argument(s): {superfluous_inputs}")
+        _, namespace = self._preprocess_inputs([], namespace)
 
         for f in self.funcs:
             namespace = f.apply_in_namespace(namespace)
 
-        return {name: val for name, val in namespace.items() if name in self.output_names}
+        result = {name: val for name, val in namespace.items() if name in self.output_names}
+
+        return self._postprocess_outputs(result)
 
     def _graph(self):
         Edge = namedtuple('Edge', ['start', 'label', 'end'])

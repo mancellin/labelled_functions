@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 
 import xarray as xr
 
+Unknown = object()
+
 class AbstractLabelledCallable:
     """Common code between all labelled function classes."""
 
@@ -14,30 +16,10 @@ class AbstractLabelledCallable:
     default_values: Dict[str, Any]  # with keys in input_names
     hidden_inputs = Set[str]  # with keys in input_names
 
-    @abstractmethod
-    def __call__(self, *args, **kwargs):
-        pass
+    def __init__(self):
+        self._has_never_been_run = True
 
-    def _output_is_consistent(self, result):
-        if result is None:
-            return len(self.output_names) == 0
-        elif isinstance(result, (list, tuple)) and len(result) > 1:
-            return len(result) == len(self.output_names)
-        elif isinstance(result, dict):
-            return set(result.keys()) == set(self.output_names)
-        # TODO: Handle named tuples
-        else:
-            return len(self.output_names) == 1
-
-    def _output_as_dict(self, result) -> Dict[str, Any]:
-        if result is None:
-            return {}
-        elif isinstance(result, dict):
-            return result
-        elif len(self.output_names) == 1 and not isinstance(result, (tuple, list)):
-            return {self.output_names[0]: result}
-        else:
-            return {name: val for name, val in zip(self.output_names, result)}
+    # SETTING ATTRIBUTES
 
     def set_default(self, **names_and_values):
         f = copy(self)
@@ -60,6 +42,79 @@ class AbstractLabelledCallable:
 
     def fix(self, **names_and_values):
         return self.set_default(**names_and_values).hide(*names_and_values.keys())
+
+    # CALLS
+
+    def _preprocess_inputs(self, args, kwargs):
+        passed_as_positional = self.input_names[:len(args)]
+
+        # Remove from the default values the parameters that have been passed
+        # as positional arguments.
+        actual_default_values = {name: value for name, value in self.default_values.items()
+                                 if name not in passed_as_positional}
+
+        kwargs = {**actual_default_values, **kwargs}
+
+        passed = set(passed_as_positional) | set(kwargs.keys())
+        required = set(self.input_names)
+
+        missing_inputs = required - passed
+        if len(missing_inputs) > 0:
+            raise TypeError(f"{self.__class__.__name__} {self.name} is missing argument(s): {missing_inputs}")
+
+        superfluous_inputs = passed - required
+        if len(superfluous_inputs) > 0:
+            raise TypeError(f"{self.__class__.__name__} {self.name} got unexpected argument(s): {superfluous_inputs}")
+
+        return args, kwargs
+
+    @abstractmethod
+    def __call__(self, **kwargs):
+        pass
+
+    def _output_is_consistent(self, result):
+        if result is None:
+            return len(self.output_names) == 0
+        elif isinstance(result, (list, tuple)) and len(result) > 1:
+            return len(result) == len(self.output_names)
+        elif isinstance(result, dict):
+            return set(result.keys()) == set(self.output_names)
+        # TODO: Handle named tuples
+        else:
+            return len(self.output_names) == 1
+
+    def _guess_output_names_from(self, result):
+        if result is None:
+            return []
+        elif isinstance(result, (list, tuple)) and len(result) > 1:
+            return [f"{self.name}[{i}]" for i in range(len(result))]
+        elif isinstance(result, dict):
+            return list(result.keys())
+        # TODO: Handle named tuples
+        else:
+            return [self.name]
+
+    def _postprocess_outputs(self, result):
+        if self._has_never_been_run:
+            self._has_never_been_run = False
+            if self.output_names is Unknown:
+                self.output_names = self._guess_output_names_from(result)
+            else:
+                if not self._output_is_consistent(result):
+                    raise TypeError(f"Inconsistent output in {self.name}!")
+        return result
+
+    # SPECIAL KINDS OF CALLS
+
+    def _output_as_dict(self, result) -> Dict[str, Any]:
+        if result is None:
+            return {}
+        elif isinstance(result, dict):
+            return result
+        elif len(self.output_names) == 1 and not isinstance(result, (tuple, list)):
+            return {self.output_names[0]: result}
+        else:
+            return {name: val for name, val in zip(self.output_names, result)}
 
     def recorded_call(self, *args, **kwargs) -> Dict[str, Any]:
         """Call the function and return a dict with its inputs and outputs.

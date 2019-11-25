@@ -9,7 +9,7 @@ from functools import update_wrapper
 
 import parso
 
-from .abstract import AbstractLabelledCallable
+from .abstract import Unknown, AbstractLabelledCallable
 
 
 # API
@@ -24,8 +24,6 @@ def label(f=None, **kwargs):
 
 
 # INTERNALS
-
-Unknown = None
 
 
 class LabelledFunction(AbstractLabelledCallable):
@@ -52,7 +50,7 @@ class LabelledFunction(AbstractLabelledCallable):
 
     Positional-only arguments are not supported (since their name is irrelevant,
     they are not suited for labelled functions).
-    
+
     The constructor `LabelledFunction` is idempotent:
     >>> lf = LabelledFunction(f)
     >>> llf = LabelledFunction(lf)
@@ -110,14 +108,12 @@ class LabelledFunction(AbstractLabelledCallable):
             self.hidden_inputs = hidden_inputs
 
             # OUTPUT
-            self._has_never_been_run = True
-
             if output_names is Unknown:
                 if _signature.return_annotation is not Signature.empty:
                     if isinstance(_signature.return_annotation, (tuple, list)):
                         output_names = list(_signature.return_annotation)
                     else:
-                        output_names = [self._signature.return_annotation]
+                        output_names = [_signature.return_annotation]
 
                 else:
                     try:
@@ -126,6 +122,8 @@ class LabelledFunction(AbstractLabelledCallable):
                     except (ValueError, TypeError):
                         pass
             self.output_names = output_names
+
+            super().__init__()
 
     @property
     def input_names(self):
@@ -166,32 +164,11 @@ class LabelledFunction(AbstractLabelledCallable):
         return f"{self.name}({input_str}) -> ({output_str})"
 
     def __call__(self, *args, **kwargs):
-        kwargs = {**self.default_values, **kwargs}
-        for i in range(len(args)):
-            if self.input_names[i] in self.default_values.keys():
-                del kwargs[self.input_names[i]]
+        args, kwargs = self._preprocess_inputs(args, kwargs)
 
         result = self.function.__call__(*args, **kwargs)
 
-        if self._has_never_been_run:
-            self._has_never_been_run = False
-            if self.output_names is Unknown:
-                self.output_names = self._guess_output_names_from(result)
-            else:
-                if not self._output_is_consistent(result):
-                    raise TypeError(f"Inconsistent output in {self.name}!")
-        return result
-
-    def _guess_output_names_from(self, result):
-        if result is None:
-            return []
-        elif isinstance(result, (list, tuple)) and len(result) > 1:
-            return [f"{self.name}[{i}]" for i in range(len(result))]
-        elif isinstance(result, dict):
-            return list(result.keys())
-        # TODO: Handle named tuples
-        else:
-            return [self.name]
+        return self._postprocess_outputs(result)
 
     def _graph(self):
         Edge = namedtuple('Edge', ['start', 'label', 'end'])
