@@ -52,8 +52,9 @@ class LabelledPipeline(AbstractLabelledCallable):
         self.funcs = [LabelledFunction(f) for f in funcs]
 
         if name is None:
-            name = f"pipeline_of_{len(funcs)}_functions"
+            name = " | ".join([f.name for f in self.funcs])
         self.name = name
+        self.__name__ = name
 
         self.return_intermediate_outputs = return_intermediate_outputs
 

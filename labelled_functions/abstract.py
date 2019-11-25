@@ -8,6 +8,7 @@ class AbstractLabelledCallable:
     """Common code between all labelled function classes."""
 
     # The attributes below should be defined in each instances of inheriting classes.
+    name: str
     input_names: List[str]
     output_names: List[str]
     default_values: Dict[str, Any]  # with keys in input_names
