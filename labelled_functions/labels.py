@@ -84,7 +84,7 @@ class LabelledFunction(AbstractLabelledCallable):
                 try:
                     name = f.__name__
                 except AttributeError:
-                    pass
+                    name = "unnamed_function"
             self.name = name
 
             self._signature = Signature.from_callable(f)
