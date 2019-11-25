@@ -107,6 +107,26 @@ class AbstractLabelledCallable:
         namespace.update(outputs)
         return namespace
 
+    def cache(self, memory=None):
+        """Return a copy of self but with results cached with joblib.
+
+        TODO: When used on a pipeline, do not merge the pipeline into a single function.
+        """
+        from labelled_functions.labels import LabelledFunction
+
+        if memory is None:
+            from joblib import Memory
+            memory = Memory("/tmp", verbose=0)
+
+        return LabelledFunction(
+            memory.cache(self),
+            name=self.name,
+            _input_names=self.input_names,
+            output_names=self.output_names,
+            default_values=self.default_values,
+            hidden_inputs=self.hidden_inputs,
+        )
+
     color_scheme = {
         'blue':   {'light': '#88BBBB', 'main': '#226666', 'dark': '#003333'},
         'red':    {'light': '#FFAAAA', 'main': '#113939', 'dark': '#550000'},
