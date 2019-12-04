@@ -78,6 +78,73 @@ radius length
 
 TODO	
 
+## As method chaining (WIP)
+
+The labelled pipeline can also be seen as an alternative to method chaining:
+```python
+(
+	my_object
+	.do_this(1.0)
+	.do_that(title="foo")
+	.do_this_other_thing(True)
+)
+```
+
+In the context of `labelled_function`, the equivalent code would be:
+```python
+(
+	do_this
+	| do_that
+	| do_this_other_thing
+)(
+	self=my_object,
+	x=1.0,
+	title="foo",
+	all=True,
+)
+```
+or
+```python
+(
+	do_this.fix(x=1.0)
+	| do_that.fix(title="foo")
+	| do_this_other_thing.fix(all=True)
+)(
+	self=my_object
+)
+```
+or alternatively
+```python
+(
+    let(self=my_object)
+	| do_this.fix(x=1.0)
+	| do_that.fix(title="foo")
+	| do_this_other_thing.fix(all=True)
+)()
+```
+
+Pro of `labelled_functions`:
+* More general: can pass more that one object between functions
+
+Cons of `labelled_functions`:
+* All argument have to be keyword arguments.
+* Too much `fix`. Some syntactic sugar should be added in the future.
+
+# Other tools
+
+```python
+from time import sleep
+from labelled_functions import time                                                                         
+
+def f(x): 
+    sleep(x)
+    y = x/2
+    return y 
+
+print(time(f)(1))
+# {'y': 0.5, 'f_execution_time': 1.0011490990873426}
+```
+
 ## Acknowledgments
 
 Some inspiration comes from the [xarray-simlab](https://github.com/benbovy/xarray-simlab) package by Benoit Bovy.
