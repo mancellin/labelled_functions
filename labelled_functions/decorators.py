@@ -20,6 +20,7 @@ def time(func):
 
     timed_f = label(
         timed_func,
+        name=f"time({func.name})",
         _input_names=func._input_names,
         output_names=func.output_names + [f"{func.name}_execution_time"],
         default_values=func.default_values,
