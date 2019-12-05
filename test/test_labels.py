@@ -27,8 +27,8 @@ def test_labelling():
 
 
 def test_idempotence():
-    lc = LabelledFunction(cube)
-    llc = LabelledFunction(lc)
+    lc = label(cube)
+    llc = label(lc)
     assert llc is lc
 
 

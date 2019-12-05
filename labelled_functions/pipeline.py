@@ -7,7 +7,7 @@ from toolz.itertoolz import groupby
 from toolz.dicttoolz import merge, keyfilter
 
 from labelled_functions.abstract import AbstractLabelledCallable
-from labelled_functions.labels import Unknown, LabelledFunction
+from labelled_functions.labels import Unknown, label, LabelledFunction
 
 # API
 # Builders
@@ -48,7 +48,7 @@ class LabelledPipeline(AbstractLabelledCallable):
                  return_intermediate_outputs=False
                  ):
 
-        self.funcs = [LabelledFunction(f) for f in funcs]
+        self.funcs = [label(f) for f in funcs]
         self.return_intermediate_outputs = return_intermediate_outputs
 
         if name is None:

@@ -14,17 +14,39 @@ from .abstract import Unknown, AbstractLabelledCallable
 
 # API
 
-def label(f=None, **kwargs):
-    if f is None:  # For use as a decorator.
-        def label_to_be_applied(f):
-            return LabelledFunction(f, **kwargs)
-        return label_to_be_applied
+def label(f=None, *,
+          name=None, output_names=Unknown,
+          default_values=None, hidden_inputs=None,
+          ):
+
+    if f is None:  # For usage as a decorator.
+        def label_decorator(f):
+            return label(f,
+                         name=name, output_names=output_names,
+                         default_values=default_values, hidden_inputs=hidden_inputs,
+                         )
+        return label_decorator
+
+    elif isinstance(f, AbstractLabelledCallable):
+        # Edit the labelled object instead of return a new one
+        if name is not None:
+            f.name = name
+        if output_names is not Unknown:
+            f.output_names = output_names
+        if default_values is not None:
+            f.default_values = default_values
+        if hidden_inputs is not None:
+            f.hidden_inputs = hidden_inputs
+        return f
+
     else:
-        return LabelledFunction(f, **kwargs)
+        return LabelledFunction(f,
+                                name=name, output_names=output_names,
+                                default_values=default_values, hidden_inputs=hidden_inputs,
+                                )
 
 
 # INTERNALS
-
 
 class LabelledFunction(AbstractLabelledCallable):
     """A class wrapping a function and storing names for its inputs and outputs.
@@ -59,12 +81,6 @@ class LabelledFunction(AbstractLabelledCallable):
 
     """
 
-    def __new__(cls, function, **kwargs):
-        if isinstance(function, AbstractLabelledCallable):
-            return function  # No need to create a new object, the function has already been labelled.
-        else:
-            return super().__new__(cls)
-
     def __init__(self,
                  function,
                  name=None,
@@ -74,47 +90,44 @@ class LabelledFunction(AbstractLabelledCallable):
                  hidden_inputs=None,
                  ):
 
-        if isinstance(function, AbstractLabelledCallable):
-            pass  # Do not rerun __init__ when idempotent call.
-        else:
-            if name is None:
-                try:
-                    name = function.__name__
-                except AttributeError:
-                    name = "unnamed_function"
+        if name is None:
+            try:
+                name = function.__name__
+            except AttributeError:
+                name = "unnamed_function"
 
-            if input_names is None or default_values is None or output_names is None:
-                _signature = Signature.from_callable(function)
+        if input_names is None or default_values is None or output_names is None:
+            _signature = Signature.from_callable(function)
 
-            # INPUT
-            if input_names is None:
-                input_names = [name for name in _signature.parameters]
+        # INPUT
+        if input_names is None:
+            input_names = [name for name in _signature.parameters]
 
-            if default_values is None:
-                p = _signature.parameters
-                default_values = {name: p[name].default for name in p
-                                  if p[name].default is not Parameter.empty}
+        if default_values is None:
+            p = _signature.parameters
+            default_values = {name: p[name].default for name in p
+                              if p[name].default is not Parameter.empty}
 
-            if hidden_inputs is None:
-                hidden_inputs = set()
+        if hidden_inputs is None:
+            hidden_inputs = set()
 
-            # OUTPUT
-            if output_names is Unknown:
-                try:
-                    source = getsource(function)
-                    output_names = _get_output_names_from_source(source)
-                except (ValueError, TypeError):
-                    pass
+        # OUTPUT
+        if output_names is Unknown:
+            try:
+                source = getsource(function)
+                output_names = _get_output_names_from_source(source)
+            except (ValueError, TypeError):
+                pass
 
-            update_wrapper(self, function)
-            super().__init__(
-                function,
-                name=name,
-                input_names=input_names,
-                output_names=output_names,
-                default_values=default_values,
-                hidden_inputs=hidden_inputs,
-            )
+        update_wrapper(self, function)
+        super().__init__(
+            function,
+            name=name,
+            input_names=input_names,
+            output_names=output_names,
+            default_values=default_values,
+            hidden_inputs=hidden_inputs,
+        )
 
     def __copy__(self):
         copied = LabelledFunction(
