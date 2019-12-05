@@ -4,7 +4,9 @@
 import pytest
 from copy import copy
 
-from labelled_functions.labels import LabelledFunction
+from labelled_functions.labels import LabelledFunction, label
+from labelled_functions.decorators import keeping_inputs
+
 from example_functions import *
 
 
@@ -64,38 +66,6 @@ def test_output_checking():
         la(1, 2)
 
 
-def test_recorder():
-    a, b = 1, 2
-
-    assert LabelledFunction(compute_pi).recorded_call() == {'pi': 3.14159}
-
-    assert LabelledFunction(double).recorded_call(a) == {'x': a, '2*x': 2*a}
-
-    assert LabelledFunction(optional_double).recorded_call(a)   == {'x': a, '2*x': 2*a}
-    assert LabelledFunction(optional_double).recorded_call(x=a) == {'x': a, '2*x': 2*a}
-    assert LabelledFunction(optional_double).recorded_call()    == {'x': 0, '2*x': 0}
-
-    assert LabelledFunction(add).recorded_call(a, b) == {'x': a, 'y': b, 'x+y': a+b}
-
-    assert LabelledFunction(optional_add).recorded_call(a, b)     == {'x': a, 'y': b, 'x+y': a+b}
-    assert LabelledFunction(optional_add).recorded_call(a)        == {'x': a, 'y': 0, 'x+y': a}
-    assert LabelledFunction(optional_add).recorded_call()         == {'x': 0, 'y': 0, 'x+y': 0}
-    assert LabelledFunction(optional_add).recorded_call(x=a, y=b) == {'x': a, 'y': b, 'x+y': a+b}
-    assert LabelledFunction(optional_add).recorded_call(y=a, x=b) == {'x': b, 'y': a, 'x+y': a+b}
-    assert LabelledFunction(optional_add).recorded_call(y=a)      == {'x': 0, 'y': a, 'x+y': a}
-
-    assert LabelledFunction(cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
-
-    with pytest.raises(TypeError):
-        LabelledFunction(all_kinds_of_args).recorded_call(0, 1, 2, 3)
-
-    assert LabelledFunction(all_kinds_of_args).recorded_call(0, 1, z=2, t=3)     == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert LabelledFunction(all_kinds_of_args).recorded_call(x=0, y=1, z=2, t=3) == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert LabelledFunction(all_kinds_of_args).recorded_call(x=0, z=2, t=3)      == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert LabelledFunction(all_kinds_of_args).recorded_call(x=0, z=2)           == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-    assert LabelledFunction(all_kinds_of_args).recorded_call(z=2, t=3, x=0)      == {'x': 0, 'y': 1, 'z': 2, 't': 3}
-
-
 def test_namespace():
     namespace = {'x': 0, 'y': 3, 'z': 2}
     new_namespace = LabelledFunction(add).apply_in_namespace(namespace)
@@ -125,10 +95,10 @@ def test_set_default():
 
 def test_hide():
     a = np.random.rand(1)[0]
-    assert LabelledFunction(optional_add).hide('x').recorded_call(y=a) == {'y': a, 'x+y': a}
-    assert LabelledFunction(optional_add).hide('y').recorded_call(y=a) == {'x': 0, 'x+y': a}
-    assert LabelledFunction(optional_add).hide('y').recorded_call() == {'x': 0, 'x+y': 0}
-    assert LabelledFunction(optional_add).hide_all_but('y').recorded_call() == {'y': 0, 'x+y': 0}
+    assert keeping_inputs(label(optional_add).hide('x'))(y=a)      == {'y': a, 'x+y': a}
+    assert keeping_inputs(label(optional_add).hide('y'))(y=a)      == {'x': 0, 'x+y': a}
+    assert keeping_inputs(label(optional_add).hide('y'))()         == {'x': 0, 'x+y': 0}
+    assert keeping_inputs(label(optional_add).hide_all_but('y'))() == {'y': 0, 'x+y': 0}
 
 
 def test_fix():
@@ -137,5 +107,5 @@ def test_fix():
     assert llc.default_values == {'radius': 1.0}
     assert llc.hidden_inputs == {'radius'}
     assert llc(length=1.0) == np.pi
-    assert llc.recorded_call(length=1.0) == {'length': 1.0, 'volume': np.pi}
+    assert keeping_inputs(llc)(length=1.0) == {'length': 1.0, 'volume': np.pi}
 

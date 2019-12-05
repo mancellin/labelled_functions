@@ -31,17 +31,17 @@ def test_map_with_several_kind_of_inputs():
 
 
 def test_recorded_map():
-    assert list(lmap(pass_inputs(double), x=[1])) == [{'x': 1, '2*x': 2}]
-    assert list(lmap(pass_inputs(optional_add), y=[1])) == [{'x': 0, 'y': 1, 'x+y': 1}]
+    assert list(lmap(keeping_inputs(double), x=[1])) == [{'x': 1, '2*x': 2}]
+    assert list(lmap(keeping_inputs(optional_add), y=[1])) == [{'x': 0, 'y': 1, 'x+y': 1}]
 
     # TODO?
     # with pytest.raises(TypeError):
     #     recorded_map(all_kinds_of_args, [0], [1], [2], [3])
 
-    assert list(lmap(pass_inputs(all_kinds_of_args), x=[0], y=[1], z=[2], t=[3])) == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
-    assert list(lmap(pass_inputs(all_kinds_of_args), x=[0], z=[2], t=[3]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
-    assert list(lmap(pass_inputs(all_kinds_of_args), x=[0], z=[2]))               == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
-    assert list(lmap(pass_inputs(all_kinds_of_args), z=[2], t=[3], x=[0]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(lmap(keeping_inputs(all_kinds_of_args), x=[0], y=[1], z=[2], t=[3])) == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(lmap(keeping_inputs(all_kinds_of_args), x=[0], z=[2], t=[3]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(lmap(keeping_inputs(all_kinds_of_args), x=[0], z=[2]))               == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
+    assert list(lmap(keeping_inputs(all_kinds_of_args), z=[2], t=[3], x=[0]))        == [{'x': 0, 'y': 1, 'z': 2, 't': 3}]
 
 
 def test_pandas_map():

@@ -8,7 +8,7 @@ import pandas as pd
 import xarray as xr
 
 from .labels import label
-from .decorators import pass_inputs
+from .decorators import keeping_inputs
 
 
 # API
@@ -16,14 +16,14 @@ from .decorators import pass_inputs
 def pandas_map(f, *args, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
-    data = pd.DataFrame(list(lmap(pass_inputs(f), **dict_of_lists)))
+    data = pd.DataFrame(list(lmap(keeping_inputs(f), **dict_of_lists)))
     return _set_index(f, data)
 
 
 def pandas_cartesian_product(f, *args, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
-    data = pd.DataFrame(list(lcartesianmap(pass_inputs(f), **dict_of_lists)))
+    data = pd.DataFrame(list(lcartesianmap(keeping_inputs(f), **dict_of_lists)))
     return _set_index(f, data)
 
 

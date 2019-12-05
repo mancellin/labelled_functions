@@ -7,17 +7,17 @@ from labelled_functions.labels import label, LabelledFunction
 
 # API
 
-def pass_inputs(func):
+def keeping_inputs(func):
     func = label(func)
 
-    def func_passing_inputs(*args, **kwargs):
+    def func_returning_inputs(*args, **kwargs):
         inputs = {**func.default_values, **{name: val for name, val in zip(func.input_names, args)}, **kwargs}
         inputs = {name: inputs[name] for name in inputs if name not in func.hidden_inputs}  # Drop hidden inputs
         outputs = func._output_as_dict(func.__call__(*args, **kwargs))
         return {**inputs, **outputs}
 
-    func_passing_inputs = LabelledFunction(
-        func_passing_inputs,
+    func_returning_inputs = LabelledFunction(
+        func_returning_inputs,
         name=f"{func.name}",
         input_names=func.input_names,
         output_names=func.output_names + list(set(func.input_names) - set(func.hidden_inputs)),
@@ -25,7 +25,7 @@ def pass_inputs(func):
         hidden_inputs=func.hidden_inputs,
     )
 
-    return func_passing_inputs
+    return func_returning_inputs
 
 def time(func):
     func = label(func)

@@ -6,6 +6,7 @@ import pytest
 from labelled_functions.labels import LabelledFunction
 from labelled_functions.pipeline import LabelledPipeline, pipeline, compose
 from labelled_functions.pipeline import let, relabel, show
+from labelled_functions.decorators import keeping_inputs
 
 from example_functions import *
 
@@ -41,14 +42,14 @@ def test_return_intermediate_outputs():
     assert 'radius' in result.keys()
 
     # Inputs and outputs but no intermediate variable
-    pipe = pipeline([random_radius, cylinder_volume], return_intermediate_outputs=False)
-    result = pipe.recorded_call(length=1.0)
+    pipe = keeping_inputs(pipeline([random_radius, cylinder_volume], return_intermediate_outputs=False))
+    result = pipe(length=1.0)
     assert 'length' in result.keys()
     assert 'radius' not in result.keys()
 
     # Inputs and outputs and intermediate variable
-    pipe = pipeline([random_radius, cylinder_volume], return_intermediate_outputs=True)
-    result = pipe.recorded_call(length=1.0)
+    pipe = keeping_inputs(pipeline([random_radius, cylinder_volume], return_intermediate_outputs=True))
+    result = pipe(length=1.0)
     assert 'length' in result.keys()
     assert 'radius' in result.keys()
 
@@ -80,7 +81,7 @@ def test_let():
     assert l.output_names == ['x']
     assert l.default_values == {}
     assert l() == (1.0,)
-    assert l.recorded_call() == {'x': 1.0}
+    assert keeping_inputs(l)() == {'x': 1.0}
 
     pipe = pipeline([let(x=1.0), cube])
     assert pipe()['volume'] == 1.0
@@ -98,7 +99,7 @@ def test_relabel():
     assert l.output_names == ["bar"]
     assert l.default_values == {}
     assert l(foo=1000) == {'bar': 1000}
-    assert l.recorded_call(foo=1000) == {'foo': 1000, 'bar': 1000}
+    assert keeping_inputs(l)(foo=1000) == {'foo': 1000, 'bar': 1000}
 
     pipe = pipeline([relabel('foo', 'x'), cube, relabel("volume", "moose")])
     assert pipe(foo=1.0)['moose'] == 1.0

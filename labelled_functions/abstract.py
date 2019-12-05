@@ -119,15 +119,6 @@ class AbstractLabelledCallable(ABC):
         result = self.function(*args, **kwargs)
         return self._postprocess_outputs(result)
 
-    # SPECIAL KINDS OF CALLS
-
-    def recorded_call(self, *args, **kwargs) -> Dict[str, Any]:
-        """Call the function and return a dict with its inputs and outputs."""
-        inputs = {**self.default_values, **{name: val for name, val in zip(self.input_names, args)}, **kwargs}
-        inputs = {name: inputs[name] for name in inputs if name not in self.hidden_inputs}  # Drop hidden inputs
-        outputs = self._output_as_dict(self.__call__(*args, **kwargs))
-        return {**inputs, **outputs}
-
     def apply_in_namespace(self, namespace: Union[Dict[str, Any], xr.Dataset]) -> Union[Dict[str, Any], xr.Dataset]:
         """Call the functions using the relevant variables in the namespace as
         inputs and adding the outputs to the namespace (in-place).
