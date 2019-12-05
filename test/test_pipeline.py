@@ -66,6 +66,10 @@ def test_default_variables():
     assert pipe(a=1) == {'output': 1}
     assert pipe(a=1, c=0) == {'output': -2}
 
+    pipe = pipeline([f, g]).fix(a=1)
+    assert pipe() == {'output': 1}
+
+    ###
     pipe = pipeline([cube], default_values={'x': 1.0})
     assert pipe()['volume'] == 1.0
     assert pipe(x=10.0)['volume'] == 1000.0

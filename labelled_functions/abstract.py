@@ -18,7 +18,6 @@ class AbstractLabelledCallable(ABC):
                  input_names: List[str],
                  output_names: List[str],
                  default_values: Dict[str, Any],
-                 hidden_inputs = Set[str],
                  ):
 
         self.function = function
@@ -29,9 +28,6 @@ class AbstractLabelledCallable(ABC):
 
         self.default_values = default_values
         assert set(self.default_values.keys()) <= set(self.input_names)
-
-        self.hidden_inputs = hidden_inputs
-        assert self.hidden_inputs <= set(self.input_names)
 
         self._has_never_been_run = True
 
@@ -48,16 +44,19 @@ class AbstractLabelledCallable(ABC):
             del f.default_values[name]
         return f
 
+    @abstractmethod
+    def fix(self, **names_and_values):
+        pass
+
     def hide(self, *hidden_names):
-        f = copy(self)
-        f.hidden_inputs = self.hidden_inputs | set(hidden_names)
-        return f
+        unhiddable_names = set(hidden_names) - set(self.default_values.keys())
+        if len(unhiddable_names) > 0:
+            raise AttributeError(f"Trying to hide an input with no default value: {unhiddable_names}")
+        return self.fix(**{n: v for n, v in self.default_values.items() if n in hidden_names})
 
     def hide_all_but(self, *not_hidden_names):
         return self.hide(*set(self.input_names) - set(not_hidden_names))
 
-    def fix(self, **names_and_values):
-        return self.set_default(**names_and_values).hide(*names_and_values.keys())
 
     # CALLS
 
@@ -202,9 +201,7 @@ class AbstractLabelledCallable(ABC):
         for f_name in function_nodes:
             add_node(f_name, **self.graph_function_style)
         for var_name in inputs_nodes:
-            if var_name in self.hidden_inputs:
-                pass
-            elif var_name in self.default_values.keys():
+            if var_name in self.default_values.keys():
                 add_node("input__" + var_name,
                        label=format_node_label(var_name, self.default_values[var_name]),
                        **self.graph_optional_input_style,
@@ -218,8 +215,7 @@ class AbstractLabelledCallable(ABC):
 
         for e in edges:
             if e.start is None and e.label in inputs_nodes:
-                if e.label not in self.hidden_inputs:
-                    add_edge("input__" + e.label, e.end)
+                add_edge("input__" + e.label, e.end)
             elif e.end is None and e.label in output_nodes:
                 add_edge(e.start, "output__" + e.label)
             elif e.start in dummy_nodes:

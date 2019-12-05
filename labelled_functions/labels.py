@@ -5,7 +5,7 @@ from typing import List
 from copy import copy
 from inspect import Parameter, Signature, getsource
 from collections import namedtuple
-from functools import update_wrapper
+from functools import update_wrapper, partial
 
 import parso
 
@@ -16,14 +16,14 @@ from .abstract import Unknown, AbstractLabelledCallable
 
 def label(f=None, *,
           name=None, output_names=Unknown,
-          default_values=None, hidden_inputs=None,
+          default_values=None,
           ):
 
     if f is None:  # For usage as a decorator.
         def label_decorator(f):
             return label(f,
                          name=name, output_names=output_names,
-                         default_values=default_values, hidden_inputs=hidden_inputs,
+                         default_values=default_values,
                          )
         return label_decorator
 
@@ -35,14 +35,12 @@ def label(f=None, *,
             f.output_names = output_names
         if default_values is not None:
             f.default_values = default_values
-        if hidden_inputs is not None:
-            f.hidden_inputs = hidden_inputs
         return f
 
     else:
         return LabelledFunction(f,
                                 name=name, output_names=output_names,
-                                default_values=default_values, hidden_inputs=hidden_inputs,
+                                default_values=default_values,
                                 )
 
 
@@ -87,7 +85,6 @@ class LabelledFunction(AbstractLabelledCallable):
                  input_names=None,
                  output_names=Unknown,
                  default_values=None,
-                 hidden_inputs=None,
                  ):
 
         if name is None:
@@ -108,9 +105,6 @@ class LabelledFunction(AbstractLabelledCallable):
             default_values = {name: p[name].default for name in p
                               if p[name].default is not Parameter.empty}
 
-        if hidden_inputs is None:
-            hidden_inputs = set()
-
         # OUTPUT
         if output_names is Unknown:
             try:
@@ -126,7 +120,6 @@ class LabelledFunction(AbstractLabelledCallable):
             input_names=input_names,
             output_names=output_names,
             default_values=default_values,
-            hidden_inputs=hidden_inputs,
         )
 
     def __copy__(self):
@@ -136,7 +129,6 @@ class LabelledFunction(AbstractLabelledCallable):
             input_names=copy(self.input_names),
             output_names=copy(self.output_names),
             default_values=copy(self.default_values),
-            hidden_inputs=copy(self.hidden_inputs),
         )
         return copied
 
@@ -158,6 +150,15 @@ class LabelledFunction(AbstractLabelledCallable):
         input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
         output_str = ", ".join(self.output_names) if len(self.output_names) > 0 else ""
         return f"{self.name}({input_str}) -> ({output_str})"
+
+    def fix(self, **names_to_fix):
+        return LabelledFunction(
+            function=partial(self.function, **names_to_fix),
+            name=self.name,
+            input_names=[n for n in self.input_names if n not in names_to_fix.keys()],
+            output_names=self.output_names,
+            default_values={n: v for n, v in self.default_values.items() if n not in names_to_fix.keys()}
+        )
 
     def _graph(self):
         Edge = namedtuple('Edge', ['start', 'label', 'end'])

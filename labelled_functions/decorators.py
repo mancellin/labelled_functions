@@ -12,7 +12,6 @@ def keeping_inputs(func):
 
     def func_returning_inputs(*args, **kwargs):
         inputs = {**func.default_values, **{name: val for name, val in zip(func.input_names, args)}, **kwargs}
-        inputs = {name: inputs[name] for name in inputs if name not in func.hidden_inputs}  # Drop hidden inputs
         outputs = func._output_as_dict(func.__call__(*args, **kwargs))
         return {**inputs, **outputs}
 
@@ -20,9 +19,8 @@ def keeping_inputs(func):
         func_returning_inputs,
         name=f"{func.name}",
         input_names=func.input_names,
-        output_names=func.output_names + list(set(func.input_names) - set(func.hidden_inputs)),
+        output_names=func.input_names + func.output_names,
         default_values=func.default_values,
-        hidden_inputs=func.hidden_inputs,
     )
 
     return func_returning_inputs
@@ -44,7 +42,6 @@ def time(func):
         input_names=func.input_names,
         output_names=func.output_names + [f"{func.name}_execution_time"],
         default_values=func.default_values,
-        hidden_inputs=func.hidden_inputs,
     )
 
     return timed_func
@@ -67,6 +64,5 @@ def time(func):
 #         input_names=func.input_names,
 #         output_names=func.output_names,
 #         default_values=func.default_values,
-#         hidden_inputs=func.hidden_inputs,
 #     )
 

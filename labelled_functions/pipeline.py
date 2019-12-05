@@ -23,7 +23,7 @@ def compose(funcs, **kwargs):
 class LabelledPipeline(AbstractLabelledCallable):
     def __init__(self,
                  funcs, *,
-                 name=None, default_values=None, hidden_inputs=None,
+                 name=None, default_values=None,
                  return_intermediate_outputs=False
                  ):
 
@@ -37,9 +37,6 @@ class LabelledPipeline(AbstractLabelledCallable):
             raise AttributeError("Cannot build a pipeline with a function whose outputs are unknown.")
 
         pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph()
-
-        if hidden_inputs is None:
-            hidden_inputs = set()
 
         if default_values is None:
             sub_default_values = sub_default_values
@@ -58,7 +55,6 @@ class LabelledPipeline(AbstractLabelledCallable):
             input_names=list(pipe_inputs),
             output_names=list(pipe_outputs),
             default_values=sub_default_values,
-            hidden_inputs=hidden_inputs,
         )
 
     def __or__(self, other):
@@ -96,6 +92,25 @@ class LabelledPipeline(AbstractLabelledCallable):
             )
         else:
             return NotImplemented
+
+    def fix(self, **names_to_fix):
+        fixed_funcs = []
+        for f in self.funcs:
+            fixable_names = {n: v for n, v in names_to_fix.items() if n in f.input_names}
+            if len(fixable_names) > 0:
+                fixed_funcs.append(f.fix(**fixable_names))
+
+                # Remove inputs that have been fixed
+                names_to_fix = {n: v for n, v in names_to_fix.items() if n not in fixable_names}
+            else:
+                fixed_funcs.append(f)
+
+        return LabelledPipeline(
+            funcs=fixed_funcs,
+            name=self.name,
+            default_values={n: v for n, v in self.default_values.items() if n not in names_to_fix.keys()},
+            return_intermediate_outputs=self.return_intermediate_outputs,
+        )
 
     def _graph(self):
         Edge = namedtuple('Edge', ['start', 'label', 'end'])

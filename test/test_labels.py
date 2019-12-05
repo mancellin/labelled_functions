@@ -96,16 +96,16 @@ def test_set_default():
 def test_hide():
     a = np.random.rand(1)[0]
     assert keeping_inputs(label(optional_add).hide('x'))(y=a)      == {'y': a, 'x+y': a}
-    assert keeping_inputs(label(optional_add).hide('y'))(y=a)      == {'x': 0, 'x+y': a}
     assert keeping_inputs(label(optional_add).hide('y'))()         == {'x': 0, 'x+y': 0}
     assert keeping_inputs(label(optional_add).hide_all_but('y'))() == {'y': 0, 'x+y': 0}
+
+    with pytest.raises(TypeError):
+        keeping_inputs(label(optional_add).hide('y'))(y=a)
 
 
 def test_fix():
     lc = LabelledFunction(cylinder_volume)
     llc = lc.fix(radius=1.0)
-    assert llc.default_values == {'radius': 1.0}
-    assert llc.hidden_inputs == {'radius'}
     assert llc(length=1.0) == np.pi
     assert keeping_inputs(llc)(length=1.0) == {'length': 1.0, 'volume': np.pi}
 

@@ -64,14 +64,6 @@ def test_pandas_map():
                               }
                         ).set_index('x')
     )
-    assert np.all(
-        pandas_map(label(cube).hide('x'), a)
-        == pd.DataFrame(data={'length': 12*a,
-                              'area': 6*a**2,
-                              'volume': a**3,
-                              }
-                        )
-    )
 
 
 def test_pandas_map_on_df():

@@ -17,14 +17,14 @@ def pandas_map(f, *args, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
     data = pd.DataFrame(list(lmap(keeping_inputs(f), **dict_of_lists)))
-    return _set_index(f, data)
+    return _set_index(f.input_names, data)
 
 
 def pandas_cartesian_product(f, *args, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
     data = pd.DataFrame(list(lcartesianmap(keeping_inputs(f), **dict_of_lists)))
-    return _set_index(f, data)
+    return _set_index(f.input_names, data)
 
 
 full_parametric_study = pandas_cartesian_product
@@ -76,8 +76,7 @@ def _preprocess_map_inputs(input_names, args, kwargs) -> dict:
         return {**{name: val for name, val in zip(input_names, args)}, **kwargs}
 
 
-def _set_index(f, data):
-    indices = [name for name in f.input_names if name not in f.hidden_inputs]
+def _set_index(indices, data):
     if len(indices) > 0:
         return data.set_index(indices)
     else:
