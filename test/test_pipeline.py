@@ -5,7 +5,7 @@ import pytest
 
 from labelled_functions.labels import LabelledFunction
 from labelled_functions.pipeline import LabelledPipeline, pipeline, compose
-from labelled_functions.pipeline import let, relabel, show
+from labelled_functions.special_functions import let, relabel, show
 from labelled_functions.decorators import keeping_inputs
 
 from example_functions import *

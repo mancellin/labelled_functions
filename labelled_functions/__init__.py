@@ -4,6 +4,7 @@ from .__about__ import (
 )
 
 from .labels import label
-from .pipeline import pipeline, compose, let, show, relabel
+from .pipeline import pipeline, compose
+from .special_functions import let, show, relabel
 from .maps import pandas_map, pandas_cartesian_product, full_parametric_study
 from .decorators import time
