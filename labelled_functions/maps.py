@@ -16,7 +16,18 @@ from .decorators import keeping_inputs
 def pandas_map(f, *args, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
-    data = pd.DataFrame(list(lmap(keeping_inputs(f), **dict_of_lists)))
+    data = list(lmap(keeping_inputs(f), **dict_of_lists))
+    data = pd.DataFrame(data)
+    return _set_index(f.input_names, data)
+
+
+def parallel_pandas_map(f, *args, n_jobs, **kwargs):
+    # WIP
+    from joblib import Parallel, delayed
+    f = label(f)
+    dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
+    data = Parallel(n_jobs=n_jobs)(lmap(delayed(keeping_inputs(f)), **dict_of_lists))
+    data = pd.DataFrame(data)
     return _set_index(f.input_names, data)
 
 
