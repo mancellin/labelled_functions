@@ -44,6 +44,28 @@ def test_output_checking():
         la(1, 2)
 
 
+def test_method():
+    class A:
+        def __init__(self):
+            self.a = 10.0
+
+        def f(self, x):
+            y = 2*x + self.a
+            return y
+
+    lab_Af = label(A().f)
+    assert list(lab_Af.input_names) == ['x']
+    assert list(lab_Af.output_names) == ['y']
+    assert lab_Af(2) == 14
+    assert lab_Af(x=2) == 14
+
+    lab_f = label(A.f)
+    assert list(lab_f.input_names) == ['self', 'x']
+    assert list(lab_f.output_names) == ['y']
+    assert lab_f(A(), 2) == 14
+    assert lab_f(A(), x=2) == 14
+
+
 def test_recorder():
     a, b = 1, 2
 
