@@ -64,7 +64,7 @@ def test_pandas_map(a, b):
                         ).set_index(['x', 'y'])
     )
     assert np.all(
-        pandas_map(annotated_cube, a)
+        pandas_map(cube, a)
         == pd.DataFrame(data={'x': a,
                               'length': 12*a,
                               'area': 6*a**2,
@@ -73,7 +73,7 @@ def test_pandas_map(a, b):
                         ).set_index('x')
     )
     assert np.all(
-        pandas_map(label(annotated_cube).hide('x'), a)
+        pandas_map(label(cube).hide('x'), a)
         == pd.DataFrame(data={'length': 12*a,
                               'area': 6*a**2,
                               'volume': a**3,

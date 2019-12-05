@@ -16,11 +16,11 @@ number = floats(allow_nan=False, allow_infinity=False)
 
 
 def test_labelled_class():
-    ldt = LabelledFunction(deep_thought)
-    assert ldt() == deep_thought(), "The LabelledFunction is not callable"
-    assert ldt.__wrapped__.__code__ == deep_thought.__code__, "Attributes are not passed to encapsulated function"
-    assert ldt.name == deep_thought.__name__, "Name is wrong"
-    assert str(ldt) == "deep_thought() -> (The Answer)", "String representation is wrong"
+    ldt = LabelledFunction(compute_pi)
+    assert ldt() == compute_pi(), "The LabelledFunction is not callable"
+    assert ldt.__wrapped__.__code__ == compute_pi.__code__, "Attributes are not passed to encapsulated function"
+    assert ldt.name == compute_pi.__name__, "Name is wrong"
+    assert str(ldt) == "compute_pi() -> (pi)", "String representation is wrong"
 
     lc = LabelledFunction(cube)
     assert lc(0) == cube(0)
@@ -70,7 +70,6 @@ def test_recorder():
     a, b = 1, 2
 
     assert label(compute_pi).recorded_call() == {'pi': 3.14159}
-    assert label(deep_thought).recorded_call() == {'The Answer': 42}
 
     assert label(double).recorded_call(a) == {'x': a, '2*x': 2*a}
 
@@ -88,7 +87,6 @@ def test_recorder():
     assert label(optional_add).recorded_call(y=a)      == {'x': 0, 'y': a, 'x+y': a}
 
     assert label(cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
-    assert label(annotated_cube).recorded_call(a) == {'x': a, 'length': 12*a, 'area': 6*a**2, 'volume': a**3}
 
     with pytest.raises(TypeError):
         label(all_kinds_of_args).recorded_call(0, 1, 2, 3)

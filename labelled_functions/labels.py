@@ -109,18 +109,11 @@ class LabelledFunction(AbstractLabelledCallable):
 
             # OUTPUT
             if output_names is Unknown:
-                if _signature.return_annotation is not Signature.empty:
-                    if isinstance(_signature.return_annotation, (tuple, list)):
-                        output_names = list(_signature.return_annotation)
-                    else:
-                        output_names = [_signature.return_annotation]
-
-                else:
-                    try:
-                        source = getsource(self.function)
-                        output_names = _get_output_names_from_source(source)
-                    except (ValueError, TypeError):
-                        pass
+                try:
+                    source = getsource(self.function)
+                    output_names = _get_output_names_from_source(source)
+                except (ValueError, TypeError):
+                    pass
             self.output_names = output_names
 
             super().__init__()

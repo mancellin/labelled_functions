@@ -8,9 +8,6 @@ def compute_pi():
     pi = 3.14159
     return pi
 
-def deep_thought() -> "The Answer":
-    return 42
-
 def double(x):
     return 2*x
 
@@ -37,8 +34,12 @@ def cube(x):
     volume = x**3
     return length, area, volume
 
-def annotated_cube(x) -> ('length', 'area', 'volume'):
-    return (12*x, 6*x**2, x**3)
-
 def all_kinds_of_args(x, y=1, *, z, t=3):
     pass
+
+#
+# def deep_thought() -> "The Answer":
+#     return 42
+#
+# def annotated_cube(x) -> ('length', 'area', 'volume'):
+#     return (12*x, 6*x**2, x**3)

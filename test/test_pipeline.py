@@ -53,10 +53,12 @@ def test_return_intermediate_outputs():
 
 
 def test_default_variables():
-    def f(a) -> 'b':
-        return 2*a
-    def g(b, c=3) -> 'output':
-        return c - b
+    def f(a):
+        b = 2*a
+        return b
+    def g(b, c=3):
+        output = c - b
+        return output
 
     pipe = pipeline([f, g])
     assert pipe(a=1) == {'output': 1}
