@@ -2,6 +2,7 @@
 # coding: utf-8
 """Some higher-order functions that make useful tools."""
 
+from labelled_functions.abstract import Unknown
 from labelled_functions.labels import label, LabelledFunction
 
 
@@ -19,11 +20,12 @@ def keeping_inputs(func):
         func_returning_inputs,
         name=f"{func.name}",
         input_names=func.input_names,
-        output_names=func.input_names + func.output_names,
+        output_names=func.input_names + func.output_names if func.output_names is not Unknown else Unknown,
         default_values=func.default_values,
     )
 
     return func_returning_inputs
+
 
 def time(func):
     func = label(func)

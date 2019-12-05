@@ -4,6 +4,7 @@
 import pytest
 from copy import copy
 
+from labelled_functions.abstract import Unknown
 from labelled_functions.labels import LabelledFunction, label
 from labelled_functions.decorators import keeping_inputs
 
@@ -53,6 +54,11 @@ def test_method():
     assert lab_f(A(), 2) == 14
     assert lab_f(A(), x=2) == 14
 
+
+def test_lambda():
+    ld = label(lambda foo: 2*foo)
+    assert ld.input_names == ["foo"]
+    assert ld.output_names is Unknown
 
 def test_output_checking():
     la = LabelledFunction(add, output_names=['shrubbery'])

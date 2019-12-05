@@ -9,7 +9,7 @@ from functools import update_wrapper, partial
 
 import parso
 
-from .abstract import Unknown, AbstractLabelledCallable
+from labelled_functions.abstract import Unknown, AbstractLabelledCallable
 
 
 # API
@@ -106,7 +106,7 @@ class LabelledFunction(AbstractLabelledCallable):
                               if p[name].default is not Parameter.empty}
 
         # OUTPUT
-        if output_names is Unknown:
+        if output_names is Unknown and function.__name__ != "<lambda>":
             try:
                 source = getsource(function)
                 output_names = _get_output_names_from_source(source)
