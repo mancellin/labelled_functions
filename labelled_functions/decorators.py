@@ -20,7 +20,7 @@ def pass_inputs(func):
         func_passing_inputs,
         name=f"{func.name}",
         input_names=func.input_names,
-        output_names=func.input_names + func.output_names,
+        output_names=func.output_names + list(set(func.input_names) - set(func.hidden_inputs)),
         default_values=func.default_values,
         hidden_inputs=func.hidden_inputs,
     )

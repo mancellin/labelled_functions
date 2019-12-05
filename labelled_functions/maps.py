@@ -1,48 +1,70 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from itertools import product
+
 import numpy as np
 import pandas as pd
 import xarray as xr
 
-from .labels import LabelledFunction
+from .labels import label
+from .decorators import pass_inputs
+
 
 # API
 
-def lmap(f, *args, **kwargs):
-    f = LabelledFunction(f)
-    dict_of_lists = identify_passed_ranges(f.input_names, args, kwargs)
-    for it_kw in lzip_with_default_values(dict_of_lists, defaults=f.default_values):
+def pandas_map(f, *args, **kwargs):
+    f = label(f)
+    dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
+    data = pd.DataFrame(list(lmap(pass_inputs(f), **dict_of_lists)))
+    return _set_index(f, data)
+
+
+def pandas_cartesian_product(f, *args, **kwargs):
+    f = label(f)
+    dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
+    data = pd.DataFrame(list(lcartesianmap(pass_inputs(f), **dict_of_lists)))
+    return _set_index(f, data)
+
+
+full_parametric_study = pandas_cartesian_product
+
+
+# TOOLS
+
+def lstarmap(f, list_of_kwargs):
+    """Similar to itertools.starmap but for keyword arguments."""
+    for it_kw in list_of_kwargs:
         yield f(**it_kw)
 
-def recorded_map(f, *args, **kwargs):
-    f = LabelledFunction(f)
-    dict_of_lists = identify_passed_ranges(f.input_names, args, kwargs)
-    for it_kw in lzip_with_default_values(dict_of_lists, defaults=f.default_values):
-        yield f.recorded_call(**it_kw)
 
-def pandas_map(f, *args, **kwargs):
-    f = LabelledFunction(f)
-    data = pd.DataFrame(list(recorded_map(f, *args, **kwargs)))
-    indices = [name for name in f.input_names if name not in f.hidden_inputs]
-    if len(indices) > 0:
-        return data.set_index(indices)
-    else:
-        return data
-
-# Tools
-
-def parallel_recorded_map(f, *args, **kwargs):
-    # First test
-    from joblib import Parallel
-    f = LabelledFunction(f)
-    dict_of_lists = identify_passed_ranges(f.input_names, args, kwargs)
-    list_of_inputs = list(lzip_with_default_values(dict_of_lists, defaults=f.default_values))
-    list_of_outputs = Parallel(n_jobs=4)((f.function, tuple(), inp) for inp in list_of_inputs)
-    return list_of_outputs
+def lzip(**dict_of_lists):
+    """
+    >>> lzip({'a': [1, 2, 3], 'b':[3, 4, 5]})
+    [{'a': 1, 'b': 3}, {'a': 2, 'b': 4}, {'a': 3, 'b': 5}]
+    """
+    for vals in zip(*dict_of_lists.values()):
+        yield {key: val for key, val in zip(dict_of_lists.keys(), vals)}
 
 
-def identify_passed_ranges(input_names, args, kwargs) -> dict:
+def lmap(f, **dict_of_lists):
+    """Similar to built-in map but for keyword arguments."""
+    list_of_dicts = lzip(**dict_of_lists)
+    yield from lstarmap(f, list_of_dicts)
+
+
+def lproduct(**dict_of_lists):
+    """Similar to itertools.product but for keyword arguments."""
+    for vals in product(*dict_of_lists.values()):
+        yield {key: val for key, val in zip(dict_of_lists.keys(), vals)}
+
+
+def lcartesianmap(f, **dict_of_lists):
+    list_of_dicts = lproduct(**dict_of_lists)
+    yield from lstarmap(f, list_of_dicts)
+
+
+def _preprocess_map_inputs(input_names, args, kwargs) -> dict:
     """When a dataframe or a dataset is passed, transfrom it into a dict of vectors"""
     if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pd.DataFrame):
         df = args[0]
@@ -53,21 +75,10 @@ def identify_passed_ranges(input_names, args, kwargs) -> dict:
     else:
         return {**{name: val for name, val in zip(input_names, args)}, **kwargs}
 
-def lzip(d):
-    """
-    >>> lzip({'a': [1, 2, 3], 'b':[3, 4, 5]})
-    [{'a': 1, 'b': 3}, {'a': 2, 'b': 4}, {'a': 3, 'b': 5}]
-    """
-    for vals in zip(*d.values()):
-        yield {key: val for key, val in zip(d.keys(), vals)}
 
-def lzip_with_default_values(d, defaults):
-    """
-    >>> lzip({'a': [1, 2, 3], 'b':[3, 4, 5]}, defaults={'c': 1})
-    [{'a': 1, 'b': 3, 'c': 1}, {'a': 2, 'b': 4, 'c': 1}, {'a': 3, 'b': 5, 'c': 1}]
-    """
-    for z in lzip(d):
-        z = {**defaults, **z}
-        yield z
-
-
+def _set_index(f, data):
+    indices = [name for name in f.input_names if name not in f.hidden_inputs]
+    if len(indices) > 0:
+        return data.set_index(indices)
+    else:
+        return data
