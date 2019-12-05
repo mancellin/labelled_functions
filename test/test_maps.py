@@ -3,10 +3,6 @@
 
 import pytest
 
-from hypothesis import given, settings
-from hypothesis.strategies import floats
-from hypothesis.extra.numpy import arrays
-
 import numpy as np
 import pandas as pd
 import xarray as xr
