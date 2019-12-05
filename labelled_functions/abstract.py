@@ -1,4 +1,7 @@
-from typing import Set, List, Dict, Union, Any
+#!/usr/bin/env python
+# coding: utf-8
+
+from typing import Callable, Set, List, Dict, Union, Any
 from copy import copy
 from abc import ABC, abstractmethod
 
@@ -6,17 +9,30 @@ import xarray as xr
 
 Unknown = object()
 
-class AbstractLabelledCallable:
+class AbstractLabelledCallable(ABC):
     """Common code between all labelled function classes."""
 
-    # The attributes below should be defined in each instances of inheriting classes.
-    name: str
-    input_names: List[str]
-    output_names: List[str]
-    default_values: Dict[str, Any]  # with keys in input_names
-    hidden_inputs = Set[str]  # with keys in input_names
+    def __init__(self,
+                 function: Callable,
+                 name: str,
+                 input_names: List[str],
+                 output_names: List[str],
+                 default_values: Dict[str, Any],
+                 hidden_inputs = Set[str],
+                 ):
 
-    def __init__(self):
+        self.function = function
+        self.name = name
+        self.__name__ = name
+        self.input_names = input_names
+        self.output_names = output_names
+
+        self.default_values = default_values
+        assert set(self.default_values.keys()) <= set(self.input_names)
+
+        self.hidden_inputs = hidden_inputs
+        assert self.hidden_inputs <= set(self.input_names)
+
         self._has_never_been_run = True
 
     # SETTING ATTRIBUTES
@@ -68,21 +84,6 @@ class AbstractLabelledCallable:
 
         return args, kwargs
 
-    @abstractmethod
-    def __call__(self, **kwargs):
-        pass
-
-    def _output_is_consistent(self, result):
-        if result is None:
-            return len(self.output_names) == 0
-        elif isinstance(result, (list, tuple)) and len(result) > 1:
-            return len(result) == len(self.output_names)
-        elif isinstance(result, dict):
-            return set(result.keys()) == set(self.output_names)
-        # TODO: Handle named tuples
-        else:
-            return len(self.output_names) == 1
-
     def _guess_output_names_from(self, result):
         if result is None:
             return []
@@ -94,49 +95,34 @@ class AbstractLabelledCallable:
         else:
             return [self.name]
 
-    def _postprocess_outputs(self, result):
-        if self._has_never_been_run:
-            self._has_never_been_run = False
-            if self.output_names is Unknown:
-                self.output_names = self._guess_output_names_from(result)
-            else:
-                if not self._output_is_consistent(result):
-                    raise TypeError(f"Inconsistent output in {self.name}!")
-        return result
-
-    # SPECIAL KINDS OF CALLS
-
     def _output_as_dict(self, result) -> Dict[str, Any]:
         if result is None:
             return {}
         elif isinstance(result, dict):
             return result
-        elif len(self.output_names) == 1 and not isinstance(result, (tuple, list)):
+        elif len(self.output_names) == 1 and not isinstance(result, tuple):
             return {self.output_names[0]: result}
         else:
             return {name: val for name, val in zip(self.output_names, result)}
 
+    def _postprocess_outputs(self, result):
+        if self._has_never_been_run:
+            self._has_never_been_run = False
+            if self.output_names is Unknown:
+                self.output_names = self._guess_output_names_from(result)
+            if set(self._output_as_dict(result).keys()) != set(self.output_names):
+                raise TypeError(f"Inconsistent output in {self.name}!")
+        return result
+
+    def __call__(self, *args, **kwargs):
+        args, kwargs = self._preprocess_inputs(args, kwargs)
+        result = self.function(*args, **kwargs)
+        return self._postprocess_outputs(result)
+
+    # SPECIAL KINDS OF CALLS
+
     def recorded_call(self, *args, **kwargs) -> Dict[str, Any]:
-        """Call the function and return a dict with its inputs and outputs.
-
-        Examples
-        --------
-        >>> LabelledFunction(round).recorded_call(1.6)
-        {'number': 1.6, 'round': 2}
-
-        >>> LabelledFunction(pow).recorded_call(2, 3)
-        {'x': 2, 'y': 3, 'pow': 8}
-
-        >>> def cube(x):
-                return (12*x, 6*x**2, x**3)
-        >>> LabelledFunction(cube).recorded_call(5)
-        {'x': 5, 'cube[0]': 60, 'cube[1]': 150, 'cube[2]': 125}
-
-        >>> def cube(x) -> ('length', 'area', 'volume'):
-                return (12*x, 6*x**2, x**3)
-        >>> LabelledFunction(cube).recorded_call(5)
-        {'x': 5, 'length': 60, 'area': 150, 'volume': 125}
-        """
+        """Call the function and return a dict with its inputs and outputs."""
         inputs = {**self.default_values, **{name: val for name, val in zip(self.input_names, args)}, **kwargs}
         inputs = {name: inputs[name] for name in inputs if name not in self.hidden_inputs}  # Drop hidden inputs
         outputs = self._output_as_dict(self.__call__(*args, **kwargs))
@@ -160,25 +146,7 @@ class AbstractLabelledCallable:
         namespace.update(outputs)
         return namespace
 
-    def cache(self, memory=None):
-        """Return a copy of self but with results cached with joblib.
-
-        TODO: When used on a pipeline, do not merge the pipeline into a single function.
-        """
-        from labelled_functions.labels import LabelledFunction
-
-        if memory is None:
-            from joblib import Memory
-            memory = Memory("/tmp", verbose=0)
-
-        return LabelledFunction(
-            memory.cache(self),
-            name=self.name,
-            _input_names=self.input_names,
-            output_names=self.output_names,
-            default_values=self.default_values,
-            hidden_inputs=self.hidden_inputs,
-        )
+    # GRAPH
 
     color_scheme = {
         'blue':   {'light': '#88BBBB', 'main': '#226666', 'dark': '#003333'},

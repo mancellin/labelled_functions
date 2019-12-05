@@ -22,12 +22,12 @@ def pipeline(funcs, **kwargs):
 
 def let(**kwargs):
     name = "let " + ", ".join((f"{name}={value}" for name, value in kwargs.items()))
-    return LabelledFunction(lambda: tuple(kwargs.values()), name=name, _input_names=[], output_names=list(kwargs.keys()))
+    return LabelledFunction(lambda: tuple(kwargs.values()), name=name, input_names=[], output_names=list(kwargs.keys()))
 
 def relabel(old, new):
     def identity(**kwargs):
         return {new: kwargs[old]}
-    lf = LabelledFunction(identity, name=f"relabel {old} as {new}", _input_names=[old], output_names=[new])
+    lf = LabelledFunction(identity, name=f"relabel {old} as {new}", input_names=[old], output_names=[new])
     return lf
 
 def show(*names):
@@ -35,7 +35,7 @@ def show(*names):
         showed = {name: kwargs[name] for name in names}
         print(showed)
         return showed
-    lf = LabelledFunction(showing, name="showing " + " ".join(names), _input_names=names, output_names=names)
+    lf = LabelledFunction(showing, name="showing " + " ".join(names), input_names=names, output_names=names)
     return lf
 
 
@@ -47,32 +47,40 @@ class LabelledPipeline(AbstractLabelledCallable):
                  name=None, default_values=None, hidden_inputs=None,
                  return_intermediate_outputs=False
                  ):
+
         self.funcs = [LabelledFunction(f) for f in funcs]
+        self.return_intermediate_outputs = return_intermediate_outputs
 
         if name is None:
             name = " | ".join([f.name for f in self.funcs])
-        self.name = name
-        self.__name__ = name
-
-        self.return_intermediate_outputs = return_intermediate_outputs
 
         if any(f.output_names is Unknown for f in self.funcs):
             raise AttributeError("Cannot build a pipeline with a function whose outputs are unknown.")
 
         pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph()
-        self.input_names = list(pipe_inputs)
-        self.output_names = list(pipe_outputs)
 
         if hidden_inputs is None:
             hidden_inputs = set()
-        self.hidden_inputs = hidden_inputs
 
         if default_values is None:
-            self.default_values = sub_default_values
+            sub_default_values = sub_default_values
         else:
-            self.default_values = {**sub_default_values, **default_values}
+            sub_default_values = {**sub_default_values, **default_values}
 
-        super().__init__()
+        def function(**namespace):
+            for f in self.funcs:
+                namespace = f.apply_in_namespace(namespace)
+            result = {name: val for name, val in namespace.items() if name in self.output_names}
+            return result
+
+        super().__init__(
+            function=function,
+            name=name,
+            input_names=list(pipe_inputs),
+            output_names=list(pipe_outputs),
+            default_values=sub_default_values,
+            hidden_inputs=hidden_inputs,
+        )
 
     def __or__(self, other):
         if isinstance(other, LabelledFunction):
@@ -109,16 +117,6 @@ class LabelledPipeline(AbstractLabelledCallable):
             )
         else:
             return NotImplemented
-
-    def __call__(self, **namespace):
-        _, namespace = self._preprocess_inputs([], namespace)
-
-        for f in self.funcs:
-            namespace = f.apply_in_namespace(namespace)
-
-        result = {name: val for name, val in namespace.items() if name in self.output_names}
-
-        return self._postprocess_outputs(result)
 
     def _graph(self):
         Edge = namedtuple('Edge', ['start', 'label', 'end'])

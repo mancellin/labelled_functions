@@ -59,78 +59,68 @@ class LabelledFunction(AbstractLabelledCallable):
 
     """
 
-    def __new__(cls, f, **kwargs):
-        if isinstance(f, AbstractLabelledCallable):
-            return f  # No need to create a new object, the function has already been labelled.
+    def __new__(cls, function, **kwargs):
+        if isinstance(function, AbstractLabelledCallable):
+            return function  # No need to create a new object, the function has already been labelled.
         else:
             return super().__new__(cls)
 
-    def __init__(self, f, *,
+    def __init__(self,
+                 function,
                  name=None,
+                 input_names=None,
                  output_names=Unknown,
                  default_values=None,
                  hidden_inputs=None,
-                 _input_names=None,
                  ):
 
-        if isinstance(f, AbstractLabelledCallable):
+        if isinstance(function, AbstractLabelledCallable):
             pass  # Do not rerun __init__ when idempotent call.
         else:
-            self.function = f
-            update_wrapper(self, f)
-
             if name is None:
                 try:
-                    name = f.__name__
+                    name = function.__name__
                 except AttributeError:
                     name = "unnamed_function"
-            self.name = name
 
-            if _input_names is None or default_values is None or output_names is None:
-                _signature = Signature.from_callable(f)
+            if input_names is None or default_values is None or output_names is None:
+                _signature = Signature.from_callable(function)
 
             # INPUT
-            if _input_names is None:
-                self._input_names = [name for name in _signature.parameters]
-            else:
-                # Should not be done by users. Only in built-in function like copy().
-                self._input_names = _input_names
-
+            if input_names is None:
+                input_names = [name for name in _signature.parameters]
 
             if default_values is None:
                 p = _signature.parameters
                 default_values = {name: p[name].default for name in p
                                   if p[name].default is not Parameter.empty}
-            self.default_values = default_values
 
             if hidden_inputs is None:
                 hidden_inputs = set()
-            self.hidden_inputs = hidden_inputs
 
             # OUTPUT
             if output_names is Unknown:
                 try:
-                    source = getsource(self.function)
+                    source = getsource(function)
                     output_names = _get_output_names_from_source(source)
                 except (ValueError, TypeError):
                     pass
-            self.output_names = output_names
 
-            super().__init__()
-
-    @property
-    def input_names(self):
-        return self._input_names
-
-    @input_names.setter
-    def input_names(self, _):
-        raise AttributeError("Input names of a labelled function should not be changed manually.")
+            update_wrapper(self, function)
+            super().__init__(
+                function,
+                name=name,
+                input_names=input_names,
+                output_names=output_names,
+                default_values=default_values,
+                hidden_inputs=hidden_inputs,
+            )
 
     def __copy__(self):
         copied = LabelledFunction(
             self.function,
             name=self.name,
-            _input_names=copy(self.input_names),
+            input_names=copy(self.input_names),
             output_names=copy(self.output_names),
             default_values=copy(self.default_values),
             hidden_inputs=copy(self.hidden_inputs),
@@ -155,13 +145,6 @@ class LabelledFunction(AbstractLabelledCallable):
         input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
         output_str = ", ".join(self.output_names) if len(self.output_names) > 0 else ""
         return f"{self.name}({input_str}) -> ({output_str})"
-
-    def __call__(self, *args, **kwargs):
-        args, kwargs = self._preprocess_inputs(args, kwargs)
-
-        result = self.function.__call__(*args, **kwargs)
-
-        return self._postprocess_outputs(result)
 
     def _graph(self):
         Edge = namedtuple('Edge', ['start', 'label', 'end'])

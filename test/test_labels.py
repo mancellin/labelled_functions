@@ -8,7 +8,7 @@ from labelled_functions.labels import LabelledFunction
 from example_functions import *
 
 
-def test_labelled_class():
+def test_labelling():
     lpi = LabelledFunction(compute_pi)
     assert lpi() == compute_pi()
     assert lpi.__wrapped__.__code__ == compute_pi.__code__

@@ -2,7 +2,7 @@
 # coding: utf-8
 """Some higher-order functions that make useful tools."""
 
-from labelled_functions.labels import label
+from labelled_functions.labels import label, LabelledFunction
 
 
 # API
@@ -16,11 +16,11 @@ def pass_inputs(func):
         outputs = func._output_as_dict(func.__call__(*args, **kwargs))
         return {**inputs, **outputs}
 
-    func_passing_inputs = label(
+    func_passing_inputs = LabelledFunction(
         func_passing_inputs,
         name=f"{func.name}",
-        _input_names=func._input_names,
-        output_names=func._input_names + func.output_names,
+        input_names=func.input_names,
+        output_names=func.input_names + func.output_names,
         default_values=func.default_values,
         hidden_inputs=func.hidden_inputs,
     )
@@ -38,13 +38,35 @@ def time(func):
         result[f"{func.name}_execution_time"] = end - start
         return result
 
-    timed_func = label(
+    timed_func = LabelledFunction(
         timed_func,
         name=f"time({func.name})",
-        _input_names=func._input_names,
+        input_names=func.input_names,
         output_names=func.output_names + [f"{func.name}_execution_time"],
         default_values=func.default_values,
         hidden_inputs=func.hidden_inputs,
     )
 
     return timed_func
+
+
+# def cache(func, memory=None):
+#     """Return a copy of func but with results cached with joblib.
+
+#     TODO: When used on a pipeline, do not merge the pipeline into a single function.
+#     """
+#     from labelled_functions.labels import LabelledFunction
+
+#     if memory is None:
+#         from joblib import Memory
+#         memory = Memory("/tmp", verbose=0)
+
+#     return LabelledFunction(
+#         memory.cache(func),
+#         name=func.name,
+#         input_names=func.input_names,
+#         output_names=func.output_names,
+#         default_values=func.default_values,
+#         hidden_inputs=func.hidden_inputs,
+#     )
+

@@ -3,8 +3,9 @@
 
 import pytest
 
-from labelled_functions.labels import label
-from labelled_functions.pipeline import *
+from labelled_functions.labels import LabelledFunction
+from labelled_functions.pipeline import LabelledPipeline, pipeline, compose
+from labelled_functions.pipeline import let, relabel, show
 
 from example_functions import *
 
@@ -19,7 +20,7 @@ def test_pipeline():
         pipe(length=1.0, potato=1.0)
 
     # Creation with "|" symbol
-    pipe = label(random_radius) | label(cylinder_volume)
+    pipe = LabelledFunction(random_radius) | LabelledFunction(cylinder_volume)
     assert isinstance(pipe, LabelledPipeline)
     assert pipe.input_names == ['length']
     assert pipe.output_names == ['volume']
