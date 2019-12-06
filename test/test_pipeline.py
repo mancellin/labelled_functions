@@ -3,7 +3,7 @@
 
 import pytest
 
-from labelled_functions.labels import LabelledFunction
+from labelled_functions.labels import LabelledFunction, label
 from labelled_functions.pipeline import LabelledPipeline, pipeline, compose
 from labelled_functions.special_functions import let, relabel, show
 from labelled_functions.decorators import keeping_inputs
@@ -66,9 +66,6 @@ def test_default_variables():
     assert pipe(a=1) == {'output': 1}
     assert pipe(a=1, c=0) == {'output': -2}
 
-    pipe = pipeline([f, g]).fix(a=1)
-    assert pipe() == {'output': 1}
-
     ###
     pipe = pipeline([cube], default_values={'x': 1.0})
     assert pipe()['volume'] == 1.0
@@ -77,6 +74,19 @@ def test_default_variables():
     pipe = pipeline([cube]).set_default(x=1.0)
     assert pipe()['volume'] == 1.0
     assert pipe(x=10.0)['volume'] == 1000.0
+
+
+def test_fix():
+    a, b = 1, 2
+    f = label(lambda x, y: x + y, name="foo", output_names=['z'])
+    g = label(lambda x, z: x * z, name="bar", output_names=['u'])
+    h = label(lambda u: u**2, name="baz", output_names=['w'])
+
+    pipe = pipeline([f, g, h]).fix(y=b)
+    assert pipe(x=a) == {'w': (a*(a+b))**2}
+
+    pipe = pipeline([f, g, h]).fix(x=a)
+    assert pipe(y=b) == {'w': (a*(a+b))**2}
 
 
 def test_let():

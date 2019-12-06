@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from typing import Set
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from toolz.itertoolz import groupby
 from toolz.dicttoolz import merge, keyfilter
 
@@ -36,7 +36,8 @@ class LabelledPipeline(AbstractLabelledCallable):
         if any(f.output_names is Unknown for f in self.funcs):
             raise AttributeError("Cannot build a pipeline with a function whose outputs are unknown.")
 
-        pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph()
+        self._graph_data = self._graph()
+        pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph_data
 
         if default_values is None:
             sub_default_values = sub_default_values
@@ -93,15 +94,22 @@ class LabelledPipeline(AbstractLabelledCallable):
         else:
             return NotImplemented
 
+    def _which_input_is_used_by_this_function(self):
+        _, _, _, _, _, edges = self._graph_data
+        inputs_used_by = defaultdict(set)
+        for e in edges:
+            if e.start is None:
+                inputs_used_by[e.end].add(e.label)
+        return inputs_used_by
+
     def fix(self, **names_to_fix):
+        inputs_used_by = self._which_input_is_used_by_this_function()
+
         fixed_funcs = []
         for f in self.funcs:
-            fixable_names = {n: v for n, v in names_to_fix.items() if n in f.input_names}
+            fixable_names = {k: v for k, v in names_to_fix.items() if k in inputs_used_by[f.name]}
             if len(fixable_names) > 0:
                 fixed_funcs.append(f.fix(**fixable_names))
-
-                # Remove inputs that have been fixed
-                names_to_fix = {n: v for n, v in names_to_fix.items() if n not in fixable_names}
             else:
                 fixed_funcs.append(f)
 
