@@ -26,6 +26,9 @@ def test_labelling():
     assert list(lc.output_names) == ['length', 'area', 'volume']
     assert str(lc) == "cube(x) -> (length, area, volume)"
 
+    assert lc.rename("square parallelepiped").name == "square parallelepiped"
+    assert lc.name == "cube"
+
 
 def test_idempotence():
     lc = label(cube)

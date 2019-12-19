@@ -16,6 +16,7 @@ def test_pipeline():
     assert pipe.input_names == ['length']
     assert pipe.output_names == ['volume']
     assert 0.0 < pipe(length=1.0)['volume'] < 2*compute_pi()
+    assert pipe.rename("bar").name == "bar"
 
     with pytest.raises(TypeError):
         pipe(length=1.0, potato=1.0)

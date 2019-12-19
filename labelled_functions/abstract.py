@@ -32,6 +32,10 @@ class AbstractLabelledCallable(ABC):
         self._has_never_been_run = True
 
     # SETTING ATTRIBUTES
+    def rename(self, name):
+        f = copy(self)
+        f.name = name
+        return f
 
     def set_default(self, **names_and_values):
         f = copy(self)
