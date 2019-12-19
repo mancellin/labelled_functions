@@ -4,6 +4,7 @@
 
 from labelled_functions.abstract import Unknown
 from labelled_functions.labels import label, LabelledFunction
+from copy import copy
 
 
 # API
@@ -49,22 +50,15 @@ def time(func):
     return timed_func
 
 
-# def cache(func, memory=None):
-#     """Return a copy of func but with results cached with joblib.
+def decorate(func, decorator):
+    new_func = copy(func)
+    new_func.function = decorator(func.function)
+    return new_func
 
-#     TODO: When used on a pipeline, do not merge the pipeline into a single function.
-#     """
-#     from labelled_functions.labels import LabelledFunction
 
-#     if memory is None:
-#         from joblib import Memory
-#         memory = Memory("/tmp", verbose=0)
-
-#     return LabelledFunction(
-#         memory.cache(func),
-#         name=func.name,
-#         input_names=func.input_names,
-#         output_names=func.output_names,
-#         default_values=func.default_values,
-#     )
+def cache(func, memory=None):
+    if memory is None:
+        from joblib import Memory
+        memory = Memory("/tmp", verbose=0)
+    return decorate(func, memory.cache)
 

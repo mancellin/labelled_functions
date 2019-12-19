@@ -3,7 +3,8 @@
 
 import pytest
 
-from labelled_functions.decorators import keeping_inputs
+from labelled_functions import label, pipeline
+from labelled_functions.decorators import keeping_inputs, decorate, cache
 from example_functions import *
 
 
@@ -26,3 +27,16 @@ def test_keeping_inputs():
     with pytest.raises(TypeError):
         keeping_inputs(all_kinds_of_args)(0, 1, 2, 3)
 
+
+def test_cache():
+    # Cache one function
+    pipe = cache(label(random_radius)) | label(cylinder_volume)
+    a = pipe(length=1.0)
+    b = pipe(length=1.0)
+    assert a == b
+
+    # Cache whole function
+    pipe = cache(pipeline([random_radius, cylinder_volume]))
+    a = pipe(length=1.0)
+    b = pipe(length=1.0)
+    assert a == b
