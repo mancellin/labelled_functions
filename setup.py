@@ -21,5 +21,6 @@ setup(
         'xarray',
         'toolz',
         'parso',
+        'joblib',
     ],
 )
