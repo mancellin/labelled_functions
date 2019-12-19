@@ -173,7 +173,7 @@ class AbstractLabelledCallable(ABC):
     def _graph(self, **kwargs):
         pass
 
-    def graph(self, backend='graphviz', rankdir='LR'):
+    def graph(self, backend='graphviz', rankdir='TB'):
         inputs_nodes, default_values, output_nodes, function_nodes, dummy_nodes, edges = self._graph()
 
         if backend == 'graphviz':
@@ -226,4 +226,10 @@ class AbstractLabelledCallable(ABC):
                 add_edge(e.start, e.end, label=e.label)
 
         return G
+
+    def save_graph(self, filepath=None):
+        from pathlib import Path
+        if filepath is None:
+            filepath = Path.cwd() / (self.name + ".pdf")
+        self.graph(backend='pygraphviz', rankdir='TB').draw(str(filepath), prog='dot')
 
