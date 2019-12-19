@@ -58,6 +58,9 @@ class LabelledPipeline(AbstractLabelledCallable):
             default_values=sub_default_values,
         )
 
+    def __repr__(self):
+        return self.name + ':\n' + '\n'.join(('\t' + repr(f)) for f in self.funcs)
+
     def __or__(self, other):
         if isinstance(other, LabelledFunction):
             return pipeline(

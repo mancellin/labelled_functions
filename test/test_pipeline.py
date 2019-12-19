@@ -12,11 +12,17 @@ from example_functions import *
 
 
 def test_pipeline():
-    pipe = pipeline([random_radius, cylinder_volume])
+    pipe = pipeline([random_radius, cylinder_volume], name="pipe")
     assert pipe.input_names == ['length']
     assert pipe.output_names == ['volume']
     assert 0.0 < pipe(length=1.0)['volume'] < 2*compute_pi()
     assert pipe.rename("bar").name == "bar"
+    assert repr(pipe) == (
+        "pipe:\n"
+        "	random_radius() -> (radius)\n"
+        "	cylinder_volume(radius, length) -> (volume)"
+    )
+
 
     with pytest.raises(TypeError):
         pipe(length=1.0, potato=1.0)

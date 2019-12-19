@@ -146,7 +146,7 @@ class LabelledFunction(AbstractLabelledCallable):
         else:
             return NotImplemented
 
-    def __str__(self):
+    def __repr__(self):
         input_str = ", ".join(self.input_names) if len(self.input_names) > 0 else ""
         output_str = ", ".join(self.output_names) if len(self.output_names) > 0 else ""
         return f"{self.name}({input_str}) -> ({output_str})"
