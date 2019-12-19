@@ -76,9 +76,22 @@ radius length
 
 ## Functional-ish programming
 
-TODO	
+```python
+import labelled_functions as lf
 
-## As method chaining (WIP)
+@lf.label
+def add(x, y):
+	return x + y
+
+# Currying
+plus_one = add.fix(x=1)
+print(plus_one(y=2))
+
+# Composition
+# TODO
+```
+
+## As fluent interface
 
 The labelled pipeline can also be seen as an alternative to method chaining:
 ```python
@@ -128,7 +141,7 @@ Pro of `labelled_functions`:
 
 Cons of `labelled_functions`:
 * All argument have to be keyword arguments.
-* Too much `fix`. Some syntactic sugar should be added in the future.
+* Too many `fix`. Some syntactic sugar should be added in the future.
 
 # Other tools
 
