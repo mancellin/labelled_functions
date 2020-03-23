@@ -168,6 +168,15 @@ class LabelledPipeline(AbstractLabelledCallable):
         return (pipe_inputs, default_values, pipe_outputs,
                 funcs_nodes, dummy_nodes, edges)
 
+    def merge_graph(self):
+        return LabelledFunction(
+            self.function,
+            name=self.name,
+            input_names=self.input_names,
+            output_names=self.output_names,
+            default_values=self.default_values
+        )
+
 def _merge_default_values(first, second):
     return {
         **first.default_values,

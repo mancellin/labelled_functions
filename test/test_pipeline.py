@@ -142,3 +142,8 @@ def test_vertical_line():
     pp = let(x=1.0) | p | show('area')
     assert pp()['volume'] == 1.0
 
+
+def test_merge():
+    pipe = pipeline([random_radius, cylinder_volume])
+    lf = pipe.merge_graph()
+    # lf.graph(backend='pygraphviz', rankdir='TB').draw('/home/matthieu/tempo/test.pdf', prog='dot')
