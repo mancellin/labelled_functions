@@ -65,7 +65,7 @@ class LabelledPipeline(AbstractLabelledCallable):
         if isinstance(other, LabelledFunction):
             return pipeline(
                 [*self.funcs, other],
-                name=self.name,
+                name=f"{self.name} | {other.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs,
                 default_values=_merge_default_values(self, other),
             )
@@ -83,14 +83,14 @@ class LabelledPipeline(AbstractLabelledCallable):
         if isinstance(other, LabelledFunction):
             return pipeline(
                 [other, *self.funcs],
-                name=self.name,
+                name=f"{other.name} | {self.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs,
                 default_values=_merge_default_values(other, self),
             )
         elif isinstance(other, LabelledPipeline):
             return pipeline(
                 [*other.funcs, *self.funcs],
-                name=f"{self.name} | {other.name}",
+                name=f"{other.name} | {self.name}",
                 return_intermediate_outputs=self.return_intermediate_outputs or other.return_intermediate_outputs,
                 default_values=_merge_default_values(other, self),
             )
