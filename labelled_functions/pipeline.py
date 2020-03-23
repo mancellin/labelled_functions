@@ -34,7 +34,7 @@ class LabelledPipeline(AbstractLabelledCallable):
             name = " | ".join([f.name for f in self.funcs])
 
         if any(f.output_names is Unknown for f in self.funcs):
-            raise AttributeError("Cannot build a pipeline with a function whose outputs are unknown.")
+            raise AttributeError(f"Cannot build a pipeline with a function ({name}) whose outputs are unknown.")
 
         self._graph_data = self._graph()
         pipe_inputs, sub_default_values, pipe_outputs, *_ = self._graph_data
