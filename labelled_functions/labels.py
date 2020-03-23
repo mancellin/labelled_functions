@@ -107,11 +107,11 @@ class LabelledFunction(AbstractLabelledCallable):
 
         # OUTPUT
         if output_names is Unknown and function.__name__ != "<lambda>":
-            try:
-                source = getsource(function)
-                output_names = _get_output_names_from_source(source)
-            except (ValueError, TypeError):
-                pass
+            # try:
+            source = getsource(function)
+            output_names = _get_output_names_from_source(source)
+            # except (ValueError, TypeError):
+            #     pass
 
         update_wrapper(self, function)
         super().__init__(
@@ -181,7 +181,8 @@ def _get_output_names_from_source(source: str) -> List[str]:
         return [n.strip(' \\\n') for n in names]
     else:
         raise ValueError("A return statement has been found, "
-                         "but it is not a simple expression or a typle")
+                         "but it is not a simple expression or a tuple:\n"
+                         f"{return_stmt.children[-1]}")
 
 def _find_return_in_tree(tree):
     # Recursively go through the syntax tree to find a return statement.
@@ -199,7 +200,7 @@ def _parse_returned_expression(tree):
     # Look for a single expression, or a tuple of expressions.
     if tree.type in {"name", "term", "arith_expr", "atom_expr"}:
         return [tree.get_code()]
-    elif tree.type == "testlist":
+    elif tree.type in {"testlist", "testlist_star_expr"}:
         return [o.get_code() for o in tree.children if not o.type == "operator"]
     elif tree.type == "atom" and "(" in tree.children[0].get_code():
         return _parse_returned_expression(tree.children[1])
