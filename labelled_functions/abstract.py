@@ -237,3 +237,7 @@ class AbstractLabelledCallable(ABC):
             filepath = Path.cwd() / (self.name + ".pdf")
         self.graph(backend='pygraphviz', rankdir='TB').draw(str(filepath), prog='dot')
 
+    def show_graph(self):
+        import IPython.display as display
+        return display.SVG(data=self.graph().pipe(format="svg"))
+
