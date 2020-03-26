@@ -8,7 +8,8 @@ At the moment, there are two main applications of labelled functions implemented
 in this package:
 * Interaction with labelled data from [pandas](https://pandas.pydata.org/) or [xarray](https://xarray.pydata.org)
 * Clever function composition to build pipeline for complex workflows.
-See examples below.
+
+See examples below and in `Example.ipynb`.
 
 # Interaction with labelled data
 
