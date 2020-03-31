@@ -163,6 +163,8 @@ print(time(f)(1))
 
 Some inspiration comes from the [xarray-simlab](https://github.com/benbovy/xarray-simlab) package by Benoit Bovy.
 
+Other package similar to this one: [graphkit](https://github.com/yahoo/graphkit)
+
 ## Author and license
 
 Matthieu Ancellin, MIT License.
