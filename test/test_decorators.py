@@ -3,8 +3,11 @@
 
 import pytest
 
+from time import sleep
+
 from labelled_functions import label, pipeline
-from labelled_functions.decorators import keeping_inputs, decorate, cache
+from labelled_functions.maps import pandas_map
+from labelled_functions.decorators import keeping_inputs, with_progress_bar, decorate, cache
 from example_functions import *
 
 
@@ -40,3 +43,16 @@ def test_cache():
     a = pipe(length=1.0)
     b = pipe(length=1.0)
     assert a == b
+
+
+def test_progress_bar(capfd):
+    def wait(dt):
+        sleep(dt)
+        output = 1
+        return output
+
+    pandas_map(wait, dt=[0.01]*10, progress_bar=True)
+
+    out, err = capfd.readouterr()
+    assert "10/10" in err
+

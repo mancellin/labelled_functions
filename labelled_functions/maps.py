@@ -8,14 +8,16 @@ import pandas as pd
 import xarray as xr
 
 from .labels import label
-from .decorators import keeping_inputs
+from .decorators import keeping_inputs, with_progress_bar
 
 
 # API
 
-def pandas_map(f, *args, n_jobs=1, **kwargs):
+def pandas_map(f, *args, progress_bar=False, n_jobs=1, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
+    if progress_bar:
+        f = with_progress_bar(f, total=len(any_value(dict_of_lists)))
     if n_jobs == 1:
         data = list(lmap(keeping_inputs(f), **dict_of_lists))
     else:
@@ -25,9 +27,11 @@ def pandas_map(f, *args, n_jobs=1, **kwargs):
     return _set_index(f.input_names, data)
 
 
-def pandas_cartesian_product(f, *args, n_jobs=1, **kwargs):
+def pandas_cartesian_product(f, *args, progress_bar=False, n_jobs=1, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
+    if progress_bar:
+        f = with_progress_bar(f, total=len(any_value(dict_of_lists)))
     if n_jobs == 1:
         data = list(lcartesianmap(keeping_inputs(f), **dict_of_lists))
     else:
@@ -91,3 +95,7 @@ def _set_index(indices, data):
         return data.set_index(indices)
     else:
         return data
+
+def any_value(d):
+    """Returns one of the values of a dict."""
+    return next(iter(d.values()))

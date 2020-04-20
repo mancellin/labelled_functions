@@ -22,5 +22,6 @@ setup(
         'toolz',
         'parso',
         'joblib',
+        'tqdm',
     ],
 )

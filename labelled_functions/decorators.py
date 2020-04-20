@@ -50,6 +50,25 @@ def time(func):
     return timed_func
 
 
+def with_progress_bar(lab_f, total=None):
+    """Add a tqdm object to count calls and display a progress bar."""
+    from tqdm import tqdm
+    bar = tqdm(total=total, unit="calls")
+
+    def add_call_counter(f):
+        def exec_with_call_counter(*args, **kwargs):
+            out = f(*args, **kwargs)
+            bar.update(1)
+            return out
+        return exec_with_call_counter
+
+    new_lab_f = copy(lab_f)
+    new_lab_f.bar = bar
+    new_lab_f.function = add_call_counter(lab_f.function)
+
+    return new_lab_f
+
+
 def decorate(func, decorator):
     new_func = copy(func)
     new_func.function = decorator(func.function)
