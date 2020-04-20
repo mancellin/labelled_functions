@@ -16,22 +16,21 @@ from .decorators import keeping_inputs, with_progress_bar
 def pandas_map(f, *args, progress_bar=False, n_jobs=1, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
-    if progress_bar:
-        f = with_progress_bar(f, total=len(any_value(dict_of_lists)))
     if n_jobs == 1:
+        if progress_bar:
+            f = with_progress_bar(f, total=len(any_value(dict_of_lists)))
         data = list(lmap(keeping_inputs(f), **dict_of_lists))
     else:
         from joblib import Parallel, delayed
-        data = Parallel(n_jobs=n_jobs)(lmap(delayed(keeping_inputs(f)), **dict_of_lists))
+        verbose = 20 if progress_bar else 0
+        data = Parallel(n_jobs=n_jobs, verbose=verbose)(lmap(delayed(keeping_inputs(f)), **dict_of_lists))
     data = pd.DataFrame(data)
     return _set_index(f.input_names, data)
 
 
-def pandas_cartesian_product(f, *args, progress_bar=False, n_jobs=1, **kwargs):
+def pandas_cartesian_product(f, *args, n_jobs=1, **kwargs):
     f = label(f)
     dict_of_lists = _preprocess_map_inputs(f.input_names, args, kwargs)
-    if progress_bar:
-        f = with_progress_bar(f, total=len(any_value(dict_of_lists)))
     if n_jobs == 1:
         data = list(lcartesianmap(keeping_inputs(f), **dict_of_lists))
     else:

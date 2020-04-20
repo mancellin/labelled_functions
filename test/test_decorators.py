@@ -52,7 +52,10 @@ def test_progress_bar(capfd):
         return output
 
     pandas_map(wait, dt=[0.01]*10, progress_bar=True)
-
     out, err = capfd.readouterr()
     assert "10/10" in err
+
+    pandas_map(wait, dt=[0.01]*10, progress_bar=True, n_jobs=2)
+    out, err = capfd.readouterr()
+    assert "Done" in err
 
